@@ -1,0 +1,23 @@
+# Lokale filer og verktøy
+.DS_Store
+.netlify/
+node_modules/
+*.log
+
+# Miljøvariabler og lokale tilgangsopplysninger
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+
+# Genererte funksjoner og publiseringsfiler
+fau-admin/netlify-funksjoner/bygg/
+fau-nettside/admin/
+dist/
+
+# Private sikkerhetskopier og dataeksporter skal aldri publiseres
+backups/
+private/
+exports/

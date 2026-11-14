@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 620 620" role="img" aria-labelledby="title desc">
+<title id="title">Hellemyr — tree, children and supporting hands</title>
+<desc id="desc">A simple green tree above three connected stick figures: a child in a wheelchair with an orange wheel between two standing children. Two cupped hands support the group. Flat colors on a square cream background.</desc>
+<rect width="620" height="620" fill="#f3ecd2"/>
+<g id="tree" fill="none" stroke="#2b211d" stroke-linecap="round" stroke-linejoin="round">
+<path d="M310 244V107" stroke-width="17"/>
+<path d="M310 194 229 139M310 194 391 139M310 236 197 206M310 236 423 206" stroke-width="11"/>
+</g>
+<g id="leaves" fill="#24754e">
+<path d="M291 155C259 153 242 127 246 101C276 103 295 126 291 155Z"/>
+<path d="M329 155C325 126 344 103 374 101C378 127 361 153 329 155Z"/>
+<path d="M273 211C244 214 225 193 218 169C245 166 266 182 273 211Z"/>
+<path d="M347 211C354 182 375 166 402 169C395 193 376 214 347 211Z"/>
+</g>
+<g id="supporting-hands" fill="none" stroke="#2b211d" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+<path d="M267 548V525L168 471Q151 462 142 443L111 374Q106 360 117 357Q126 355 132 369L157 415 216 447 182 418Q172 409 179 401Q185 394 198 402L261 440Q280 452 290 473"/>
+<path d="M353 548V525L452 471Q469 462 478 443L509 374Q514 360 503 357Q494 355 488 369L463 415 404 447 438 418Q448 409 441 401Q435 394 422 402L359 440Q340 452 330 473"/>
+</g>
+<g id="children" stroke-linecap="round" stroke-linejoin="round">
+<g id="standing-left" fill="#99263b" stroke="#99263b">
+<circle cx="191" cy="270" r="13" stroke="none"/>
+<path d="M191 279V336M191 297 164 325 147 318M191 297 231 321 272 307M191 336 170 387H158M191 336 211 387H223" fill="none" stroke-width="12"/>
+</g>
+<g id="standing-right" fill="#99263b" stroke="#99263b">
+<circle cx="429" cy="279" r="13" stroke="none"/>
+<path d="M429 288V341M429 304 390 325 347 307M429 304 456 328 473 320M429 341 409 387H397M429 341 450 387H462" fill="none" stroke-width="12"/>
+</g>
+<g id="wheelchair-child" stroke="#99263b" fill="#99263b">
+<circle cx="310" cy="281" r="12" stroke="none"/>
+<circle cx="301" cy="357" r="30" fill="none" stroke="#d74425" stroke-width="10"/>
+<path d="M310 289V342H336L350 381H362M310 304 291 317 272 307M310 304 330 317 347 307" fill="none" stroke-width="12"/>
+</g>
+</g>
+</svg>

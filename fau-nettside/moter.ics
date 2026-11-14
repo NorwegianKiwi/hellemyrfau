@@ -1,0 +1,58 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FAU Hellemyr//NO
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:FAU Hellemyr
+X-WR-TIMEZONE:Europe/Oslo
+BEGIN:VEVENT
+UID:fau-mote-20261116@hellemyrfau.no
+DTSTAMP:20261020T120000Z
+DTSTART:20261116T163000Z
+DTEND:20261116T180000Z
+SUMMARY:FAU-møte – Hellemyr skole
+LOCATION:Personalrommet (lærerværelset)\, Hellemyr skole\, Hellemyrtoppen 3\, Kristiansand
+DESCRIPTION:Kl. 17.30–19.00. Har du en sak til møtet? Meld den inn på https://hellemyrfau.no
+URL:https://hellemyrfau.no
+END:VEVENT
+BEGIN:VEVENT
+UID:fau-mote-20270111@hellemyrfau.no
+DTSTAMP:20261020T120000Z
+DTSTART:20270111T163000Z
+DTEND:20270111T180000Z
+SUMMARY:FAU-møte – Hellemyr skole
+LOCATION:Personalrommet (lærerværelset)\, Hellemyr skole\, Hellemyrtoppen 3\, Kristiansand
+DESCRIPTION:Kl. 17.30–19.00. Har du en sak til møtet? Meld den inn på https://hellemyrfau.no
+URL:https://hellemyrfau.no
+END:VEVENT
+BEGIN:VEVENT
+UID:fau-mote-20270222@hellemyrfau.no
+DTSTAMP:20261020T120000Z
+DTSTART:20270222T163000Z
+DTEND:20270222T180000Z
+SUMMARY:FAU-møte – Hellemyr skole
+LOCATION:Personalrommet (lærerværelset)\, Hellemyr skole\, Hellemyrtoppen 3\, Kristiansand
+DESCRIPTION:Kl. 17.30–19.00. Har du en sak til møtet? Meld den inn på https://hellemyrfau.no
+URL:https://hellemyrfau.no
+END:VEVENT
+BEGIN:VEVENT
+UID:fau-mote-20270419@hellemyrfau.no
+DTSTAMP:20261020T120000Z
+DTSTART:20270419T153000Z
+DTEND:20270419T170000Z
+SUMMARY:FAU-møte – Hellemyr skole
+LOCATION:Personalrommet (lærerværelset)\, Hellemyr skole\, Hellemyrtoppen 3\, Kristiansand
+DESCRIPTION:Kl. 17.30–19.00. Har du en sak til møtet? Meld den inn på https://hellemyrfau.no
+URL:https://hellemyrfau.no
+END:VEVENT
+BEGIN:VEVENT
+UID:fau-mote-20270531@hellemyrfau.no
+DTSTAMP:20261020T120000Z
+DTSTART:20270531T153000Z
+DTEND:20270531T170000Z
+SUMMARY:FAU-møte – Hellemyr skole
+LOCATION:Personalrommet (lærerværelset)\, Hellemyr skole\, Hellemyrtoppen 3\, Kristiansand
+DESCRIPTION:Kl. 17.30–19.00. Har du en sak til møtet? Meld den inn på https://hellemyrfau.no
+URL:https://hellemyrfau.no
+END:VEVENT
+END:VCALENDAR

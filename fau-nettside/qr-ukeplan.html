@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR-kode til ukeplanen – FAU Hellemyr</title>
+<meta name="robots" content="noindex">
+<style>
+  @font-face { font-family: "Sofia Sans"; src: url("/fonts/sofia-sans-var.woff2") format("woff2"); font-weight: 100 1000; font-display: swap; }
+  :root {
+    --bg: #fcf8f1;
+    --surface: #ffffff;
+    --ink: #2b2530;
+    --ink-soft: #625a66;
+    --brand: #a8475a;
+    --brand-deep: #7d3043;
+    --natt: #2c2230;
+    --lyng: #7c4368;
+    --line: #ebe2d3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Sofia Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem; line-height: 1.6;
+  }
+  h1, h2 { font-family: "Sofia Sans", sans-serif; font-weight: 800; color: var(--natt); text-wrap: balance; }
+  .verktoy { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1.1rem 3rem; }
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1.2rem 1.3rem; margin-bottom: 1.2rem;
+    box-shadow: 0 1px 2px rgba(44,24,34,.06), 0 4px 14px rgba(44,24,34,.05);
+  }
+  label { font-weight: 600; display: block; margin-bottom: 0.3rem; }
+  .url-rad { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  input[type="url"] {
+    flex: 1 1 18rem; font: inherit; padding: 0.55rem 0.7rem;
+    border: 1.5px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--bg);
+  }
+  input[type="url"]:focus-visible { outline: 3px solid var(--lyng); outline-offset: 1px; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    background: var(--brand); color: #fff; border: none; border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+  }
+  button:hover { background: var(--brand-deep); }
+  button.sekundaer { background: var(--surface); color: var(--brand); border: 1.5px solid var(--brand); }
+  button.sekundaer:hover { background: var(--bg); }
+  .hint { color: var(--ink-soft); font-size: 0.92rem; }
+  .stor-qr { display: flex; gap: 1.3rem; flex-wrap: wrap; align-items: center; }
+  .stor-qr img { width: 220px; height: 220px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fff; }
+
+  /* ---- Utskriftsark ---- */
+  .ark {
+    background: #fff; border: 1px solid var(--line); border-radius: 4px;
+    max-width: 210mm; margin: 0 auto; padding: 8mm;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  }
+  .lapp {
+    border: 1px dashed #b8c2ba;
+    padding: 6mm 5mm; display: flex; gap: 5mm; align-items: center;
+  }
+  .lapp img { width: 30mm; height: 30mm; flex: 0 0 auto; }
+  .lapp-tekst { font-size: 10pt; line-height: 1.35; }
+  .lapp-boble {
+    display: inline-block; position: relative; margin: 0 0 3mm; padding: 1.4mm 3mm;
+    background: var(--brand); color: #fff; border-radius: 3mm;
+    font-family: "Sofia Sans", sans-serif; font-weight: 800; font-style: italic; font-size: 10.5pt;
+    transform: rotate(-2deg); -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .lapp-boble::after { content: ""; position: absolute; bottom: -2.2mm; left: 22%; border: 2.4mm solid transparent; border-top-color: var(--brand); border-bottom: 0; }
+  .lapp-tekst strong { font-family: "Sofia Sans", sans-serif; color: var(--natt); font-size: 12pt; display: block; margin-bottom: 1mm; }
+  .lapp-tekst small { color: var(--ink-soft); font-size: 8pt; word-break: break-all; display: block; margin-top: 1.5mm; }
+
+  @media print {
+    body { background: #fff; }
+    .verktoy, .kun-skjerm { display: none; }
+    .ark { border: none; padding: 0; max-width: none; }
+    @page { size: A4; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="verktoy">
+  <h1>QR-kode til ukeplanen</h1>
+  <p>Dette verktøyet lager QR-koden som sendes hjem på ukeplanen, slik at foresatte kan skanne den og komme rett til FAU-siden. Åpne filen i vanlig nettleser (Safari/Chrome) på egen maskin.</p>
+
+  <div class="panel">
+    <label for="url">Nettadressen QR-koden skal peke til</label>
+    <div class="url-rad">
+      <input type="url" id="url" value="">
+      <button id="lag">Oppdater QR-kode</button>
+    </div>
+    <p class="hint">Tips: En QR som peker rett på testene (lim inn https://hellemyrfau.no/#/tester) med teksten «Tør du? Test om du kan aldersgrensene» kan få flere til å skanne enn en generell lenke. Adressen fylles ellers automatisk med nettsiden dette verktøyet ligger på. Får FAU ny adresse senere (for eksempel eget domene), lim inn den nye og trykk «Oppdater QR-kode» – og test alltid med mobilkamera før trykking.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Til ukeplan-dokumentet</h2>
+    <div class="stor-qr">
+      <img id="qr-stor" alt="QR-kode som peker til FAU Hellemyr-nettsiden">
+      <div>
+        <p>Høyreklikk på bildet og velg <strong>«Kopier bilde»</strong> (eller «Lagre bilde som …»), og lim det inn i ukeplan-malen i Word.</p>
+        <p class="hint">Anbefalt størrelse på ukeplanen: minst 2 × 2 cm.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Utskriftsark med lapper</h2>
+    <p>Arket under har åtte lapper til å klippe ut – til oppslagstavle, foreldremøter eller ranselpost. <button id="skriv-ut" class="sekundaer">Skriv ut arket</button></p>
+  </div>
+</div>
+
+<div class="ark" id="ark"></div>
+
+<div class="kun-skjerm" style="height: 2rem;"></div>
+
+<div id="qr-verksted" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const verksted = document.getElementById("qr-verksted");
+  const ark = document.getElementById("ark");
+
+  function byggLapper(dataUrl, url) {
+    ark.innerHTML = "";
+    for (let i = 0; i < 8; i++) {
+      const lapp = document.createElement("div");
+      lapp.className = "lapp";
+      lapp.innerHTML =
+        '<img alt="QR-kode til FAU Hellemyr-nettsiden">' +
+        '<div class="lapp-tekst"><strong>FAU på Hellemyr skole</strong>' +
+        'Skann og se hva foreldrene på Hellemyr gjør – 17. mai, vennegrupper, skolegården og skjermråd.' +
+        "<small></small></div>";
+      lapp.querySelector("img").src = dataUrl;
+      lapp.querySelector("small").textContent = url;
+      ark.appendChild(lapp);
+    }
+  }
+
+  function lagQR() {
+    const url = document.getElementById("url").value.trim();
+    if (!url) return;
+    verksted.innerHTML = "";
+    new QRCode(verksted, { text: url, width: 640, height: 640, correctLevel: QRCode.CorrectLevel.M });
+    setTimeout(() => {
+      const canvas = verksted.querySelector("canvas");
+      if (!canvas) return;
+      const dataUrl = canvas.toDataURL("image/png");
+      document.getElementById("qr-stor").src = dataUrl;
+      byggLapper(dataUrl, url);
+    }, 60);
+  }
+
+  document.getElementById("lag").addEventListener("click", lagQR);
+  document.getElementById("url").addEventListener("keydown", (e) => { if (e.key === "Enter") lagQR(); });
+  document.getElementById("skriv-ut").addEventListener("click", () => window.print());
+  const urlFelt = document.getElementById("url");
+  if (!urlFelt.value) {
+    urlFelt.value = location.protocol.startsWith("http") ? location.origin : "https://hellemyrfau.no";
+  }
+  lagQR();
+</script>
+</body>
+</html>

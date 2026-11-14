@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="robots" content="noindex, nofollow">
+<title>Innboks – FAU Hellemyr</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  @font-face { font-family: "Sofia Sans"; src: url("/fonts/sofia-sans-var.woff2") format("woff2"); font-weight: 100 1000; font-display: swap; }
+  :root {
+    --natt: #2c2230; --hoved: #a8475a; --hoved-tekst: #7d3043;
+    --bg: #fcf8f1; --surface: #ffffff; --ink: #2b2530; --ink-soft: #6b6370; --line: #ece4d7;
+    --boble-inn: #f1ece5; --boble-ut: #a8475a; --bla: #2f7cf6;
+    --ny: #a8475a; --behandling: #b07a10; --besvart: #3f7a3a; --arkivert: #8a8490;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Sofia Sans", -apple-system, system-ui, sans-serif; font-size: 16px; line-height: 1.45; }
+  button, select, textarea, input { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+
+  .topp { height: 56px; display: flex; align-items: center; gap: .8rem; padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); background: rgba(255,255,255,.9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .topp h1 { margin: 0; font-size: 1.1rem; font-weight: 800; flex: 1; }
+  .topp h1 span { font-weight: 600; color: var(--ink-soft); font-size: .85rem; margin-left: .35rem; }
+  .topp .meg { font-size: .85rem; color: var(--ink-soft); }
+  .lenkeknapp { background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: .35rem .75rem; font-size: .85rem; font-weight: 650; cursor: pointer; }
+
+  .innlogging { max-width: 24rem; margin: 12vh auto; text-align: center; padding: 0 16px; }
+  .innlogging .kort { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 2rem 1.5rem; box-shadow: 0 10px 30px rgba(44,34,48,.06); }
+  .innlogging h2 { margin: 0 0 .3rem; }
+  .innlogging p { color: var(--ink-soft); margin: 0 0 1.2rem; }
+  #google-knapp { display: flex; justify-content: center; min-height: 44px; }
+  .feil { color: var(--hoved-tekst); font-weight: 650; margin-top: 1rem; }
+
+  .app { display: grid; grid-template-columns: 22rem 1fr; height: calc(100dvh - 56px); }
+  .liste-side { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+  .liste-verktoy { padding: .7rem .8rem .5rem; display: grid; gap: .5rem; border-bottom: 1px solid var(--line); }
+  .sok { width: 100%; border: none; background: var(--boble-inn); border-radius: 10px; padding: .5rem .75rem; font-size: .95rem; outline: none; }
+  .faner { display: flex; gap: .3rem; overflow-x: auto; scrollbar-width: none; }
+  .faner button { flex: 0 0 auto; border: none; background: none; border-radius: 999px; padding: .3rem .7rem; font-size: .82rem; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+  .faner button[aria-pressed="true"] { background: var(--natt); color: #fff; }
+  .favoritter { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .7rem .3rem; padding: .9rem .6rem .8rem; border-bottom: 1px solid var(--line); }
+  .fav { display: grid; justify-items: center; gap: .3rem; border: none; background: none; cursor: pointer; padding: 0; min-width: 0; }
+  .fav-sirkel { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-weight: 850; font-size: 1.05rem; color: #fff; background: var(--a); box-shadow: 0 0 0 3px #fff, 0 0 0 4.5px transparent; transition: box-shadow .15s; }
+  .fav[aria-pressed="true"] .fav-sirkel { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--a); }
+  .fav-teller { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; border-radius: 10px; background: var(--bla); color: #fff; font-size: .72rem; font-weight: 800; display: grid; place-items: center; padding: 0 5px; border: 2px solid #fff; }
+  .fav-navn { font-size: .72rem; font-weight: 650; color: var(--ink-soft); text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; }
+  .fav[aria-pressed="true"] .fav-navn { color: var(--ink); font-weight: 800; }
+  .samtaler { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+  .samtale { display: grid; grid-template-columns: 12px 42px 1fr; gap: .2rem .6rem; align-items: center; width: 100%; text-align: left; border: none; background: none; padding: .7rem .8rem .7rem .4rem; cursor: pointer; border-bottom: 1px solid #f3eee7; }
+  .samtale:hover { background: #faf6f0; }
+  .samtale[aria-current="true"] { background: color-mix(in srgb, var(--hoved) 9%, #fff); }
+  .prikk { width: 9px; height: 9px; border-radius: 50%; justify-self: center; }
+  .samtale.ulest .prikk { background: var(--bla); }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .95rem; color: #fff; background: var(--a, #b9aeb3); flex: 0 0 auto; }
+  .samtale-tekst { min-width: 0; display: grid; }
+  .samtale-rad { display: flex; gap: .4rem; align-items: baseline; }
+  .samtale-navn { font-weight: 700; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .samtale.ulest .samtale-navn { font-weight: 850; }
+  .samtale-tid { font-size: .78rem; color: var(--ink-soft); flex: 0 0 auto; }
+  .samtale-tema { font-size: .78rem; font-weight: 700; color: var(--hoved-tekst); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .samtale-utdrag { font-size: .88rem; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tom-liste { padding: 2rem 1rem; text-align: center; color: var(--ink-soft); }
+
+  .trad-side { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--bg); }
+  .trad-topp { display: flex; align-items: center; gap: .7rem; padding: .6rem 1rem; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.92); }
+  .tilbake { display: none; border: none; background: none; color: var(--bla); font-size: 1rem; font-weight: 650; cursor: pointer; padding: .3rem .2rem; }
+  .trad-tittel { flex: 1; min-width: 0; }
+  .trad-tittel strong { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trad-tittel span { font-size: .8rem; color: var(--ink-soft); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .status-velger { border: 1.5px solid var(--line); border-radius: 999px; padding: .3rem .6rem; font-size: .82rem; font-weight: 750; background: #fff; color: var(--sf, var(--ink)); }
+  .info-knapp { border: 1.5px solid var(--line); background: #fff; border-radius: 50%; width: 34px; height: 34px; font-weight: 800; color: var(--ink-soft); cursor: pointer; flex: 0 0 auto; }
+  .meldinger { flex: 1; overflow-y: auto; padding: 1.2rem 1rem 1rem; display: flex; flex-direction: column; gap: .3rem; }
+  .dag { align-self: center; font-size: .75rem; font-weight: 700; color: var(--ink-soft); margin: .8rem 0 .3rem; }
+  .boble { max-width: min(36rem, 78%); padding: .55rem .85rem; border-radius: 20px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .97rem; }
+  .boble.inn { align-self: flex-start; background: var(--boble-inn); border-bottom-left-radius: 6px; }
+  .boble.ut { align-self: flex-end; background: var(--boble-ut); color: #fff; border-bottom-right-radius: 6px; }
+  .boble.notat { align-self: center; background: #fff6dc; color: #5c4710; border: 1px dashed #e8cf86; border-radius: 12px; font-size: .9rem; max-width: 30rem; }
+  .under { font-size: .72rem; color: var(--ink-soft); margin: 0 .4rem .6rem; }
+  .under.inn { align-self: flex-start; } .under.ut { align-self: flex-end; } .under.notat { align-self: center; }
+  .send-epost { align-self: flex-end; display: inline-flex; gap: .35rem; align-items: center; font-size: .82rem; font-weight: 750; color: var(--bla); text-decoration: none; border: 1.5px solid color-mix(in srgb, var(--bla) 35%, transparent); background: #fff; border-radius: 999px; padding: .3rem .75rem; margin: -.2rem 0 .7rem; }
+  .send-epost:hover { background: color-mix(in srgb, var(--bla) 6%, #fff); }
+  .system { align-self: center; font-size: .75rem; color: var(--ink-soft); background: #f3eee7; border-radius: 999px; padding: .2rem .7rem; margin: .3rem 0; }
+  .tom-trad { flex: 1; display: grid; place-items: center; color: var(--ink-soft); text-align: center; padding: 2rem; }
+
+  .skriv { border-top: 1px solid var(--line); background: rgba(255,255,255,.96); padding: .6rem .8rem calc(.6rem + env(safe-area-inset-bottom, 0px)); display: grid; gap: .45rem; }
+  .modus { display: flex; gap: .3rem; font-size: .8rem; }
+  .modus button { border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: .2rem .65rem; font-weight: 700; cursor: pointer; color: var(--ink-soft); }
+  .modus button[aria-pressed="true"] { border-color: var(--hoved); color: var(--hoved-tekst); background: color-mix(in srgb, var(--hoved) 7%, #fff); }
+  .modus button.notat[aria-pressed="true"] { border-color: #d9b44a; color: #6b5210; background: #fff6dc; }
+  .skriv-rad { display: flex; gap: .5rem; align-items: flex-end; }
+  .skriv textarea { flex: 1; resize: none; border: 1.5px solid var(--line); border-radius: 20px; padding: .55rem .9rem; min-height: 42px; max-height: 9rem; font-size: .97rem; outline: none; background: #fff; }
+  .skriv textarea:focus { border-color: var(--hoved); }
+  .skriv.notat-modus textarea { background: #fffaf0; border-color: #e8cf86; }
+  .send { width: 42px; height: 42px; border-radius: 50%; border: none; background: var(--hoved); color: #fff; font-size: 1.2rem; font-weight: 800; cursor: pointer; flex: 0 0 auto; }
+  .skriv.notat-modus .send { background: #c9a43c; }
+  .send:disabled { opacity: .35; cursor: default; }
+  .skriv-hjelp { font-size: .75rem; color: var(--ink-soft); }
+
+  .detaljer { position: fixed; top: 56px; right: 0; bottom: 0; width: min(22rem, 100vw); background: #fff; border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(44,34,48,.08); padding: 1.1rem; overflow-y: auto; z-index: 6; display: grid; gap: 1rem; align-content: start; }
+  .detaljer h3 { margin: 0; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .detaljer label { display: block; font-size: .78rem; font-weight: 750; color: var(--ink-soft); margin-bottom: .25rem; }
+  .detaljer select { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: .45rem .6rem; background: #fff; }
+  .detaljer dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .3rem .8rem; font-size: .88rem; }
+  .detaljer dt { color: var(--ink-soft); }
+  .detaljer dd { margin: 0; overflow-wrap: anywhere; }
+  .historikk { font-size: .8rem; color: var(--ink-soft); margin: 0; padding-left: 1rem; }
+  .fare { border: 1.5px solid #e2b7bf; color: var(--hoved-tekst); background: #fff; border-radius: 10px; padding: .45rem .8rem; font-weight: 700; cursor: pointer; }
+  .bekreft { display: flex; gap: .4rem; align-items: center; font-size: .88rem; flex-wrap: wrap; }
+  .bekreft .ja { background: var(--hoved); color: #fff; border: none; border-radius: 10px; padding: .45rem .8rem; font-weight: 700; cursor: pointer; }
+  .melding-feil { align-self: center; color: var(--hoved-tekst); font-size: .82rem; font-weight: 650; }
+
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; }
+    .app.i-trad .liste-side { display: none; }
+    .app:not(.i-trad) .trad-side { display: none; }
+    .tilbake { display: inline-block; }
+    .boble { max-width: 85%; }
+    .topp .meg { display: none; }
+    .trad-topp .avatar { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="topp">
+  <h1>Innboks<span>FAU Hellemyr</span></h1>
+  <span class="meg" id="meg"></span>
+  <button class="lenkeknapp" id="logg-ut" hidden>Logg ut</button>
+</header>
+
+<section class="innlogging" id="innlogging">
+  <div class="kort">
+    <h2>Logg inn</h2>
+    <p>Bare FAU med tilgang kan se innboksen. Logg inn med Google-kontoen din.</p>
+    <div id="google-knapp"></div>
+    <p class="feil" id="inn-feil" hidden></p>
+  </div>
+</section>
+
+<div class="app" id="app" hidden>
+  <aside class="liste-side">
+    <div class="liste-verktoy">
+      <input class="sok" id="sok" type="search" placeholder="Søk i saker" aria-label="Søk i saker">
+      <div class="faner" id="faner" role="group" aria-label="Filter">
+        <button data-f="aktive" aria-pressed="true">Aktive</button>
+        <button data-f="ny" aria-pressed="false">Nye</button>
+        <button data-f="besvart" aria-pressed="false">Besvart</button>
+        <button data-f="arkivert" aria-pressed="false">Arkiv</button>
+        <button data-f="alle" aria-pressed="false">Alle</button>
+      </div>
+    </div>
+    <div class="favoritter" id="temaer" role="group" aria-label="Kategorier"></div>
+    <ul class="samtaler" id="samtaler"></ul>
+  </aside>
+
+  <section class="trad-side" id="trad">
+    <div class="tom-trad" id="tom-trad"><div><strong>Velg en sak</strong><br>Sakene fra «Meld inn sak» vises som samtaler til venstre.</div></div>
+    <div class="trad-topp" id="trad-topp" hidden>
+      <button class="tilbake" id="tilbake">‹ Saker</button>
+      <div class="avatar" id="t-avatar" aria-hidden="true"></div>
+      <div class="trad-tittel"><strong id="t-navn"></strong><span id="t-meta"></span></div>
+      <select class="status-velger" id="t-status" aria-label="Status"></select>
+      <button class="info-knapp" id="info" aria-label="Detaljer" title="Detaljer">i</button>
+    </div>
+    <div class="meldinger" id="meldinger" hidden aria-live="polite"></div>
+    <form class="skriv" id="skriv" hidden>
+      <div class="modus" role="group" aria-label="Type melding">
+        <button type="button" data-m="svar" aria-pressed="true">Svar</button>
+        <button type="button" class="notat" data-m="notat" aria-pressed="false">Internt notat</button>
+      </div>
+      <div class="skriv-rad">
+        <textarea id="tekst" rows="1" placeholder="Skriv et svar …" aria-label="Melding"></textarea>
+        <button class="send" id="send" type="submit" aria-label="Lagre" disabled>↑</button>
+      </div>
+      <div class="skriv-hjelp" id="skriv-hjelp"></div>
+    </form>
+  </section>
+</div>
+
+<aside class="detaljer" id="detaljer" hidden>
+  <h3>Detaljer <button class="lenkeknapp" id="lukk-detaljer">Lukk</button></h3>
+  <div><label for="d-ansvarlig">Ansvarlig</label><select id="d-ansvarlig"></select></div>
+  <dl id="d-info"></dl>
+  <div><label>Historikk</label><ul class="historikk" id="d-logg"></ul></div>
+  <div>
+    <button class="fare" id="slett">Slett saken</button>
+    <div class="bekreft" id="bekreft" hidden>Slette for godt? <button class="ja" id="slett-ja">Ja, slett</button> <button class="lenkeknapp" id="slett-nei">Avbryt</button></div>
+  </div>
+</aside>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(() => {
+  const STATUSER = ["ny", "under behandling", "besvart", "arkivert"];
+  const STATUSNAVN = { "ny": "Ny", "under behandling": "Under behandling", "besvart": "Besvart", "arkivert": "Arkivert" };
+  const STATUSFARGE = { "ny": "var(--ny)", "under behandling": "var(--behandling)", "besvart": "var(--besvart)", "arkivert": "var(--arkivert)" };
+  const AVATARFARGER = ["#a8475a", "#c0703a", "#5a8a52", "#4a7fa5", "#8a5aa5", "#b08a2e"];
+  let token = null, saker = [], admins = [], meg = null, filter = "aktive", tema = "alle", valgt = null, modus = "svar";
+  const epostKlar = {};
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const klokke = iso => new Date(iso).toLocaleTimeString("nb-NO", { hour: "2-digit", minute: "2-digit" });
+  const dagStart = x => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const dagNavn = iso => {
+    const d = new Date(iso), i = new Date(); const diff = Math.round((dagStart(i) - dagStart(d)) / 864e5);
+    if (diff === 0) return "I dag"; if (diff === 1) return "I går";
+    return d.toLocaleDateString("nb-NO", { weekday: diff < 7 ? "long" : undefined, day: "numeric", month: "long", year: d.getFullYear() !== i.getFullYear() ? "numeric" : undefined });
+  };
+  const kortTid = iso => { const d = dagNavn(iso); return d === "I dag" ? klokke(iso) : d === "I går" ? "I går" : new Date(iso).toLocaleDateString("nb-NO", { day: "numeric", month: "short" }); };
+  const avsender = s => s.navn || (s.epost ? s.epost.split("@")[0] : "Anonym forelder");
+  const initialer = s => { const n = avsender(s); return n === "Anonym forelder" ? "?" : n.split(/\s+/).map(x => x[0]).join("").slice(0, 2).toUpperCase(); };
+  const avatarFarge = s => AVATARFARGER[[...String(s.id)].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATARFARGER.length];
+  const sisteAktivitet = s => [s.mottatt, ...(s.svar || []).map(v => v.tid), ...(s.notater || []).map(v => v.tid)].sort().pop();
+  const navnFor = e => e === (meg && meg.epost) ? meg.navn + " (meg)" : e;
+  const mailto = (s, t) => "mailto:" + encodeURIComponent(s.epost) + "?subject=" + encodeURIComponent("Svar fra FAU Hellemyr: " + (s.tema || "saken din")) + "&body=" + encodeURIComponent(t + "\n\nVennlig hilsen\n" + (meg ? meg.navn : "") + "\nFAU Hellemyr");
+
+  async function api(metode, body) {
+    const r = await fetch("/api/admin", { method: metode, headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    const d = await r.json().catch(() => ({}));
+    if (r.status === 401) { loggUt(d.feil || "Økten er utløpt. Logg inn på nytt."); throw new Error("401"); }
+    if (!r.ok) throw new Error(d.feil || "Noe gikk galt.");
+    return d;
+  }
+  function loggUt(melding) {
+    token = null; saker = []; valgt = null;
+    try { sessionStorage.removeItem("fau-admin-token"); } catch (e) {}
+    if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
+    $("app").hidden = true; $("detaljer").hidden = true; $("innlogging").hidden = false; $("logg-ut").hidden = true; $("meg").textContent = "";
+    $("inn-feil").hidden = !melding; $("inn-feil").textContent = melding || "";
+  }
+  async function hent() {
+    const d = await api("GET");
+    saker = d.saker; admins = d.admins || []; meg = d.bruker;
+    $("meg").textContent = meg.navn;
+    $("innlogging").hidden = true; $("app").hidden = false; $("logg-ut").hidden = false;
+    tegnListe(); tegnTrad();
+  }
+
+  const iFilter = (s, f) => f === "alle" ? true : f === "aktive" ? s.status === "ny" || s.status === "under behandling" : s.status === f;
+  function tegnListe() {
+    const q = $("sok").value.trim().toLowerCase();
+    const temaer = [...new Set(saker.map(s => s.tema || "Uten tema"))].sort();
+    if (tema !== "alle" && !temaer.includes(tema)) tema = "alle";
+    const TEMAFARGER = ["#a8475a", "#4a7fa5", "#5a8a52", "#c0703a", "#8a5aa5", "#b08a2e", "#3d7f86"];
+    const forkort = t => t === "alle" ? "Alle" : t.replace(/^(Barnas|Trygg|Skole)\s*/i, m => m).split(/\s+/).filter(w => w.length > 2 && !/^(og|med|for|til)$/i.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || t[0].toUpperCase();
+    $("temaer").innerHTML = ["alle", ...temaer].map((t, i) => {
+      const nye = saker.filter(s => s.status === "ny" && (t === "alle" || (s.tema || "Uten tema") === t)).length;
+      const farge = t === "alle" ? "#2c2230" : TEMAFARGER[(i - 1) % TEMAFARGER.length];
+      return `<button class="fav" data-t="${esc(t)}" aria-pressed="${t === tema}" title="${esc(t === "alle" ? "Alle kategorier" : t)}"><span class="fav-sirkel" style="--a:${farge}">${esc(forkort(t))}${nye ? `<span class="fav-teller">${nye}</span>` : ""}</span><span class="fav-navn">${t === "alle" ? "Alle" : esc(t)}</span></button>`;
+    }).join("");
+    document.querySelectorAll("#faner button").forEach(b => {
+      const n = saker.filter(s => iFilter(s, b.dataset.f)).length;
+      b.textContent = b.textContent.replace(/ \d+$/, "") + (n ? " " + n : "");
+    });
+    const vis = saker.filter(s => iFilter(s, filter) && (tema === "alle" || (s.tema || "Uten tema") === tema)
+      && (!q || [s.melding, s.navn, s.epost, s.tema, ...(s.svar || []).map(v => v.tekst)].join(" ").toLowerCase().includes(q)))
+      .sort((a, b) => sisteAktivitet(b).localeCompare(sisteAktivitet(a)));
+    $("samtaler").innerHTML = vis.length ? vis.map(s => {
+      const siste = (s.svar || []).length ? s.svar[s.svar.length - 1].hvem.split(" ")[0] + ": " + s.svar[s.svar.length - 1].tekst : s.melding;
+      return `<li><button class="samtale ${s.status === "ny" ? "ulest" : ""}" data-id="${esc(s.id)}" aria-current="${s.id === valgt}">
+        <span class="prikk" aria-hidden="true"></span>
+        <span class="avatar" style="--a:${avatarFarge(s)}" aria-hidden="true">${esc(initialer(s))}</span>
+        <span class="samtale-tekst">
+          <span class="samtale-rad"><span class="samtale-navn">${esc(avsender(s))}${s.trinn ? " · " + esc(s.trinn) : ""}</span><span class="samtale-tid">${kortTid(sisteAktivitet(s))}</span></span>
+          <span class="samtale-tema">${esc(s.tema || "Uten tema")} · ${STATUSNAVN[s.status]}${s.ansvarlig ? " · " + esc(navnFor(s.ansvarlig).split("@")[0]) : ""}</span>
+          <span class="samtale-utdrag">${esc(siste)}</span>
+        </span></button></li>`;
+    }).join("") : `<li class="tom-liste">Ingen saker her.</li>`;
+  }
+
+  function tegnTrad() {
+    const s = saker.find(x => x.id === valgt);
+    const har = !!s;
+    $("tom-trad").hidden = har; $("trad-topp").hidden = !har; $("meldinger").hidden = !har; $("skriv").hidden = !har;
+    if (!har) { $("detaljer").hidden = true; return; }
+    $("t-avatar").textContent = initialer(s); $("t-avatar").style.setProperty("--a", avatarFarge(s));
+    $("t-navn").textContent = avsender(s);
+    $("t-meta").textContent = [s.tema || "Uten tema", s.trinn, s.epost || (s.navn ? "ingen e-post" : "anonym")].filter(Boolean).join(" · ");
+    $("t-status").innerHTML = STATUSER.map(st => `<option value="${st}" ${st === s.status ? "selected" : ""}>${STATUSNAVN[st]}</option>`).join("");
+    $("t-status").style.setProperty("--sf", STATUSFARGE[s.status]);
+
+    const hendelser = [{ type: "inn", tid: s.mottatt, tekst: s.melding }]
+      .concat((s.svar || []).map((v, i) => ({ type: "ut", tid: v.tid, tekst: v.tekst, hvem: v.hvem, nr: i })))
+      .concat((s.notater || []).map(v => ({ type: "notat", tid: v.tid, tekst: v.tekst, hvem: v.hvem })))
+      .concat(s.notat ? [{ type: "notat", tid: s.mottatt, tekst: s.notat, hvem: "Notat" }] : [])
+      .sort((a, b) => a.tid.localeCompare(b.tid));
+    let forrigeDag = "";
+    const sisteSvar = (s.svar || []).length - 1;
+    $("meldinger").innerHTML = hendelser.map(h => {
+      const dag = dagNavn(h.tid); const dagHtml = dag !== forrigeDag ? `<div class="dag">${dag}</div>` : ""; forrigeDag = dag;
+      const under = h.type === "inn" ? `${esc(avsender(s))} · ${klokke(h.tid)}` : h.type === "ut" ? `${esc(h.hvem)} · ${klokke(h.tid)}` : `Internt notat · ${esc(h.hvem)} · ${klokke(h.tid)}`;
+      const epostLenke = h.type === "ut" && s.epost && (epostKlar[s.id] === h.nr || h.nr === sisteSvar)
+        ? `<a class="send-epost" href="${esc(mailto(s, h.tekst))}" target="_blank" rel="noopener">✉︎ ${epostKlar[s.id] === h.nr ? "Send svaret på e-post" : "Åpne i e-post"}</a>` : "";
+      return dagHtml + `<div class="boble ${h.type}">${esc(h.tekst)}</div><div class="under ${h.type}">${under}</div>` + epostLenke;
+    }).join("") + (s.status === "arkivert" ? `<div class="system">Saken er arkivert</div>` : "");
+    $("meldinger").scrollTop = $("meldinger").scrollHeight;
+    oppdaterSkriv(s);
+
+    $("d-ansvarlig").innerHTML = `<option value="">Ingen ennå</option>` + admins.map(e => `<option value="${esc(e)}" ${e === s.ansvarlig ? "selected" : ""}>${esc(navnFor(e))}</option>`).join("");
+    $("d-info").innerHTML = `<dt>Mottatt</dt><dd>${new Date(s.mottatt).toLocaleString("nb-NO")}</dd><dt>Tema</dt><dd>${esc(s.tema || "–")}</dd><dt>Trinn</dt><dd>${esc(s.trinn || "–")}</dd><dt>Navn</dt><dd>${esc(s.navn || "–")}</dd><dt>E-post</dt><dd>${esc(s.epost || "–")}</dd>`;
+    $("d-logg").innerHTML = (s.logg || []).slice().reverse().map(l => `<li>${new Date(l.tid).toLocaleString("nb-NO", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} – ${esc(l.hvem)}: ${esc(l.hva)}</li>`).join("") || "<li>Ingen endringer ennå</li>";
+    $("bekreft").hidden = true; $("slett").hidden = false;
+  }
+  function oppdaterSkriv(s) {
+    $("skriv").classList.toggle("notat-modus", modus === "notat");
+    $("tekst").placeholder = modus === "notat" ? "Internt notat – bare FAU ser dette …" : (s.epost ? "Skriv et svar …" : "Skriv hva FAU har svart eller gjort …");
+    $("skriv-hjelp").textContent = modus === "notat" ? "Notatet vises bare for FAU, ikke for innsenderen."
+      : s.epost ? "Svaret lagres i saken. Deretter kan du sende det på e-post til " + s.epost + " med ett trykk."
+      : "Innsenderen la ikke igjen e-post, så svaret lagres bare i saken.";
+  }
+
+  function aapne(id) {
+    valgt = id; $("app").classList.add("i-trad");
+    tegnListe(); tegnTrad();
+    const s = saker.find(x => x.id === id);
+    if (s && s.status === "ny") endre({ status: "under behandling" }, true);
+  }
+  async function endre(felt, stille) {
+    try {
+      const { sak } = await api("POST", { id: valgt, ...felt });
+      saker = saker.map(x => x.id === sak.id ? sak : x);
+      tegnListe(); tegnTrad();
+      return sak;
+    } catch (e) {
+      if (e.message !== "401" && !stille) { $("meldinger").insertAdjacentHTML("beforeend", `<div class="melding-feil">Kunne ikke lagre: ${esc(e.message)}</div>`); }
+    }
+  }
+
+  $("samtaler").addEventListener("click", e => { const b = e.target.closest(".samtale"); if (b) aapne(b.dataset.id); });
+  $("tilbake").addEventListener("click", () => { $("app").classList.remove("i-trad"); $("detaljer").hidden = true; });
+  $("faner").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; filter = b.dataset.f; document.querySelectorAll("#faner button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); tegnListe(); });
+  $("temaer").addEventListener("click", e => { const b = e.target.closest(".fav"); if (!b) return; tema = b.dataset.t === tema && tema !== "alle" ? "alle" : b.dataset.t; tegnListe(); });
+  $("sok").addEventListener("input", tegnListe);
+  $("t-status").addEventListener("change", e => endre({ status: e.target.value }));
+  $("d-ansvarlig").addEventListener("change", e => endre({ ansvarlig: e.target.value }));
+  $("info").addEventListener("click", () => { $("detaljer").hidden = !$("detaljer").hidden; });
+  $("lukk-detaljer").addEventListener("click", () => { $("detaljer").hidden = true; });
+  $("slett").addEventListener("click", () => { $("slett").hidden = true; $("bekreft").hidden = false; });
+  $("slett-nei").addEventListener("click", () => { $("slett").hidden = false; $("bekreft").hidden = true; });
+  $("slett-ja").addEventListener("click", async () => {
+    try { await api("DELETE", { id: valgt }); saker = saker.filter(x => x.id !== valgt); valgt = null; $("detaljer").hidden = true; $("app").classList.remove("i-trad"); tegnListe(); tegnTrad(); }
+    catch (e) { /* vises ved neste lasting */ }
+  });
+  document.querySelector(".modus").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return; modus = b.dataset.m;
+    document.querySelectorAll(".modus button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    oppdaterSkriv(saker.find(x => x.id === valgt)); $("tekst").focus();
+  });
+  const tekst = $("tekst");
+  tekst.addEventListener("input", () => { tekst.style.height = "auto"; tekst.style.height = Math.min(tekst.scrollHeight, 144) + "px"; $("send").disabled = !tekst.value.trim(); });
+  tekst.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && window.matchMedia("(hover: hover)").matches) { e.preventDefault(); $("skriv").requestSubmit(); } });
+  $("skriv").addEventListener("submit", async e => {
+    e.preventDefault();
+    const t = tekst.value.trim(); if (!t) return;
+    const s = saker.find(x => x.id === valgt);
+    $("send").disabled = true;
+    const sak = await endre(modus === "notat" ? { notatNy: t } : { svar: t, ansvarlig: s.ansvarlig || (meg && meg.epost) });
+    if (!sak) { $("send").disabled = false; return; }
+    if (modus === "svar" && sak.epost) { epostKlar[sak.id] = sak.svar.length - 1; tegnTrad(); }
+    tekst.value = ""; tekst.style.height = "auto";
+  });
+  $("logg-ut").addEventListener("click", () => loggUt());
+
+  async function start() {
+    const { klientId } = await (await fetch("/api/admin/konfig")).json();
+    if (!klientId) { $("google-knapp").innerHTML = '<p class="feil">Innloggingen er ikke satt opp ennå.</p>'; return; }
+    try { const t = sessionStorage.getItem("fau-admin-token"); if (t) { token = t; await hent(); } } catch (e) { token = null; }
+    const vent = () => window.google?.accounts?.id ? init() : setTimeout(vent, 100);
+    const init = () => {
+      google.accounts.id.initialize({ client_id: klientId, callback: async r => {
+        token = r.credential;
+        try { sessionStorage.setItem("fau-admin-token", token); } catch (e) {}
+        try { await hent(); } catch (e) { if (e.message !== "401") loggUt(e.message); }
+      } });
+      google.accounts.id.renderButton($("google-knapp"), { theme: "outline", size: "large", text: "signin_with", locale: "nb" });
+    };
+    vent();
+  }
+  start();
+})();
+</script>
+</body>
+</html>
