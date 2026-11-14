@@ -16,6 +16,7 @@ node_modules/
 fau-admin/netlify-funksjoner/bygg/
 fau-nettside/admin/
 dist/
+build/
 
 # Private sikkerhetskopier og dataeksporter skal aldri publiseres
 backups/
