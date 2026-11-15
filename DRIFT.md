@@ -9,15 +9,19 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
    med egne innlogginger og tofaktor. Avtal hvem som følger opp feil og sikkerhetskopi.
    Bruk Workers Free og ikke aktiver betalte tjenester.
 2. Kjør `npx wrangler login`. Kontroller at riktig FAU-konto er valgt, særlig hvis
-   du har flere kontoer. Sett eventuelt `CLOUDFLARE_ACCOUNT_ID` i eget terminalmiljø.
-3. Opprett databasen med **jurisdiksjon**, ikke bare et plasseringstips:
+   du har flere kontoer. `account_id` i `wrangler.jsonc` peker eksplisitt til
+   Hellemyr FAU. Ikke overstyr den med `CLOUDFLARE_ACCOUNT_ID` for en annen konto.
+3. Databasen skal ha **EU-jurisdiksjon**, ikke bare et plasseringstips.
+   Ved eventuell nyoppretting brukes:
 
    ```sh
    npx wrangler d1 create hellemyrfau-saker --jurisdiction=eu
    ```
 
-   Erstatt null-ID-en for produksjonsdatabasen i `wrangler.jsonc` med ID-en fra
-   kommandoen. Database-ID er ikke en hemmelighet. Behold lokal database separat.
+   Produksjonsdatabasen er allerede opprettet og koblet til `DB` i
+   `wrangler.jsonc`; ikke opprett en ny ved vanlig oppsett. Kommandoen over er
+   referanse for eventuell nyoppretting. Konto- og database-ID er ikke hemmeligheter.
+   Behold lokal database separat.
    Kontroller EU-jurisdiksjon i kontrollpanelet; den kan ikke endres etter opprettelse.
 4. Opprett Google OAuth-klient av typen Web application i et Google-prosjekt FAU
    har tilgang til. Gi minst to driftsansvarlige tilgang der også. Tillat JavaScript-

@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "hellemyrfau-api",
+  "account_id": "5c29efbec4af2dca2c69ac34a8ef91c8",
   "main": "worker/index.mjs",
   "compatibility_date": "2026-11-15",
   "workers_dev": true,
@@ -16,7 +17,8 @@
   "d1_databases": [{
     "binding": "DB",
     "database_name": "hellemyrfau-saker",
-    "database_id": "00000000-0000-0000-0000-000000000000",
+    "database_id": "aa3623ae-14fa-476d-b6aa-576b812b3b3f",
+    "jurisdiction": "eu",
     "migrations_dir": "worker/migrations"
   }],
   "ratelimits": [{
