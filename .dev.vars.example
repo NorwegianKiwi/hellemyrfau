@@ -1,0 +1,3 @@
+# Kopier til .dev.vars.local for lokal Worker. Bruk separat lokal Google-klient.
+GOOGLE_CLIENT_ID=""
+ADMIN_EPOSTER=""

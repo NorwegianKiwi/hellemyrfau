@@ -1,28 +1,12 @@
-# FAU på Hellemyr skole – nettside
+# Nettsiden til Hellemyr FAU
 
-Kildekoden til https://hellemyrfau.no. Statisk nettside (én side med hash-ruter i `index.html`) som publiseres på Netlify.
+Statisk HTML, CSS og JavaScript med hash-navigasjon i `index.html`.
+Nettsiden, dokumenter, skrifttyper og admin publiseres samlet på GitHub Pages.
+Skjemaet bruker Cloudflare Worker og D1; ingen serverkode kjøres på GitHub Pages.
 
-## Innhold
-- `index.html` – hele nettsiden: innhold (PAGES), stil og skript
-- `qr-ukeplan.html`, `404.html`, `takk.html` – egne sider
-- `dokumenter/` – PDF-er til nedlasting
-- `fonts/` – Sofia Sans (selvhostet)
-- `_redirects`, `robots.txt`, `sitemap.xml` – omdirigeringer og søkemotorfiler; felles `netlify.toml` ligger i repoets rotmappe
-- `og-bilde.png`, `favicon.*`, `apple-touch-icon.png`, `hellemyr-ikon.svg` – bilder og ikon
-- `moter.ics` – kalenderfil med FAU-møtene
+Kjør bygg og lokal visning fra repoets rotmappe som beskrevet i
+[README](../README.md). Offentlige rotfiler listes eksplisitt i
+`scripts/build.mjs`. Bare offentlige filer skal legges i dokument- og fontmappene.
 
-Innboksen for FAU (hellemyrfau.no/admin) ligger i nabomappa `fau-admin` i samme repo.
-
-## Bygge og publisere
-
-Kjør fra repoets rotmappe:
-
-```sh
-npm ci
-npm run build
-```
-
-Bygget samler nettsiden og admin i `dist/`, og funksjonene i `build/functions/`.
-Det er ikke lenger nødvendig å kopiere adminfiler manuelt. Vanlige lokale bygg
-har admin og lagring deaktivert. Se [felles README](../README.md) for
-produksjonsbygg og kobling til det eksisterende Netlify-prosjektet.
+Forhåndsvisninger viser skjemaet, men innsending er deaktivert. Bruk lokal
+API-konfigurasjon og oppdiktede saker ved utvikling.
