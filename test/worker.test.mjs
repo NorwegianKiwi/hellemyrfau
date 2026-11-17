@@ -95,9 +95,11 @@ test('ugyldig innhold, robotfelt, botsjekk og stengt mottak avvises', async () =
 test('preview tillater testinnsending og admin, men stenger endelige domener', async () => {
   const { env, call, message } = setup();
   const preview = 'https://hellemyrfau.github.io';
-  // Bruk den faktiske deploy-konfigurasjonen, med mottaket eksplisitt åpnet.
-  const config = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
-  Object.assign(env, config.vars, { SUBMISSIONS_OPEN: 'true' });
+  // Preview-policyen testes separat fra konfigurasjonen for domenelanseringen.
+  Object.assign(env, {
+    ALLOWED_ORIGINS: [origin, 'https://www.hellemyrfau.no', preview].join(','),
+    SUBMISSION_ORIGINS: preview, SUBMISSIONS_OPEN: 'true'
+  });
   for (const blocked of [origin, 'https://www.hellemyrfau.no']) {
     const response = await call('/api/saker', 'POST', message, '', { origin: blocked });
     assert.equal(response.status, 503);
@@ -119,6 +121,30 @@ test('preview tillater testinnsending og admin, men stenger endelige domener', a
   env.SUBMISSIONS_OPEN = 'false';
   assert.equal((await call('/api/saker', 'POST', message, '', headers)).status, 503);
   assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 1);
+});
+
+test('lanseringskonfigurasjonen holder mottak stengt og avviser preview også ved åpning', async () => {
+  const { env, call, message } = setup();
+  const { vars } = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
+  Object.assign(env, vars);
+  assert.equal(env.SUBMISSIONS_OPEN, 'false');
+  for (const site of [origin, 'https://www.hellemyrfau.no']) {
+    assert.equal((await call('/api/saker', 'POST', message, '', { origin: site })).status, 503);
+    assert.equal((await call('/api/admin', 'GET', undefined, 'admin', { origin: site })).status, 200);
+    assert.equal((await call('/api/admin', 'GET', undefined, '', { origin: site })).status, 401);
+  }
+  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 0);
+  env.SUBMISSIONS_OPEN = 'true';
+  for (const site of [origin, 'https://www.hellemyrfau.no']) {
+    assert.equal((await call('/api/saker', 'POST', { ...message, id: crypto.randomUUID() }, '', { origin: site })).status, 201);
+  }
+  for (const site of ['https://hellemyrfau.github.io', 'https://evil.test']) {
+    const response = await call('/api/saker', 'POST', message, '', { origin: site });
+    assert.equal(response.status, 403);
+    assert.equal(response.headers.get('access-control-allow-origin'), null);
+    assert.equal((await call('/api/admin', 'GET', undefined, 'admin', { origin: site })).status, 403);
+  }
+  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 2);
 });
 
 test('trafikkgrense gir Retry-After og skriver ikke til databasen', async () => {
@@ -256,13 +282,16 @@ test('Turnstile krever gyldig resultat, riktig vert og riktig handling', async t
 });
 
 
-test('preview-konfigurasjonen godtar Turnstile bare fra preview-verten', async t => {
+test('lanseringskonfigurasjonen godtar Turnstile bare fra endelige verter', async t => {
   const { vars: env } = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
   env.TURNSTILE_SECRET_KEY = 'secret';
-  let result = { success: true, hostname: 'hellemyrfau.github.io', action: 'send-sak' };
+  let result = { success: true, hostname: 'hellemyrfau.no', action: 'send-sak' };
   t.mock.method(globalThis, 'fetch', async () => Response.json(result));
-  assert.equal(await verifyTurnstile('token', env), true);
-  for (const hostname of ['hellemyrfau.no', 'www.hellemyrfau.no', 'evil.test']) {
+  for (const hostname of ['hellemyrfau.no', 'www.hellemyrfau.no']) {
+    result.hostname = hostname;
+    assert.equal(await verifyTurnstile('token', env), true);
+  }
+  for (const hostname of ['hellemyrfau.github.io', 'evil.test']) {
     result.hostname = hostname;
     assert.equal(await verifyTurnstile('token', env), false);
   }

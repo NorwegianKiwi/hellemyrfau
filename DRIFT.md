@@ -72,6 +72,16 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
 
 ## Funksjonstest på GitHub-forhåndsvisningen
 
+Forhåndsvisningen er funksjonstestet: Google-innlogging, innsending, notat,
+arkivering/gjenåpning, svar og sletting fungerte, og mobilvisning er kontrollert.
+Testsaken er slettet og mottaket stengt. Repoets Worker-konfigurasjon er nå
+forberedt for **de endelige domenene**, fortsatt med `SUBMISSIONS_OPEN=false`.
+Prosedyren under beskriver preview-oppsettet. Ved ny preview-testing må
+`ALLOWED_ORIGINS` inkludere `https://hellemyrfau.github.io`,
+`SUBMISSION_ORIGINS` settes til bare `https://hellemyrfau.github.io`, og
+`TURNSTILE_HOSTNAMES` til bare `hellemyrfau.github.io` i en gjennomgått endring.
+Ikke åpne mottak før preview-avgrensningen er kontrollert.
+
 Netlify betjener fortsatt det offentlige domenet. Behold Netlify-appen suspendert.
 Ikke endre DNS, Pages Custom domain eller `PAGES_PRODUCTION` i denne prosedyren.
 Gjennomgå og merge PR-en først; Worker publiseres manuelt fra gjennomgått kode.
@@ -151,36 +161,63 @@ originene i `ALLOWED_ORIGINS`. Direkte kommandolinjekontroller må også oppgi O
 CORS er ikke autentisering: alle adminoperasjoner kontrollerer Google-token og
 administratorlisten på serveren.
 
-## Lansering
+## Forberedelse før DNS-bytte
 
-- Når forhåndsvisningen er godkjent: verifiser domeneeierskapet i GitHub-
-  organisasjonen og konfigurer hellemyrfau.no under Pages. Sett repository-
-  variabelen `PAGES_PRODUCTION` til `true` og kjør workflowen på main; bygget bruker
-  da rotstien, API-konfigurasjon og CNAME. Dette er et eget lanseringssteg, ikke en
-  del av preview-oppsettet. Flytt deretter DNS etter GitHubs gjeldende A/AAAA/CNAME-
-  anvisninger. Behold MX/TXT-poster for e-post og Netlify som retrettmulighet.
-  Aktiver Enforce HTTPS når sertifikatet er klart.
+Dette kan gjøres før den som har DNS-tilgang er tilgjengelig:
+
+1. Gjennomgå og merge konfigurasjonsendringen. Det publiserer ikke Worker-en
+   eller åpner mottaket. Behold Netlify-appen suspendert.
+2. Publiser Worker fra gjennomgått main med `npm run deploy:worker`.
+   `SUBMISSIONS_OPEN` skal fortsatt være `false`. Worker tillater nå bare
+   `https://hellemyrfau.no` og `https://www.hellemyrfau.no`, så API/login på
+   github.io-preview slutter å fungere etter denne publiseringen.
+3. Kontroller at begge sluttdomenene fortsatt er lagret i Googles Authorized
+   JavaScript origins og Turnstile-widgetens hostname-liste. Ikke hent secrets.
+4. Varsle om at preview-adressen endres før neste steg: produksjonsbygget bruker
+   rotstier og fungerer ikke lenger som `/nettside/`-preview. Når Custom domain
+   lagres, videresender github.io-adressen til hellemyrfau.no (fortsatt Netlify
+   fram til DNS-bytte). Netlifys publiserte nettsted og DNS endres ikke av dette.
+5. Sett `PAGES_PRODUCTION=true` i GitHub Actions-variablene og kjør «Kontroller bygg»
+   på main. Vent på vellykket Pages-publisering. Bygget har rotstier, endelig
+   API-originliste og ingen preview-noindex på offentlig innhold. Admin beholder
+   noindex. Det genererte CNAME er ikke en erstatning for Pages-innstillingen.
+6. Sett Pages → Custom domain til `hellemyrfau.no` og lagre **før DNS-bytte**.
+   DNS-sjekk og sertifikat kan stå som ventende til DNS peker til GitHub.
+   Verifiser gjerne domenet på GitHub-organisasjonen først; TXT-verifisering
+   krever at DNS-ansvarlig legger til verdien GitHub oppgir.
+7. Meld «klart for DNS-bytte» først når produksjonsbygget er publisert, Pages
+   Custom domain er lagret, Worker er publisert med sluttoriginene og stengt
+   mottak, og eksterne Google/Turnstile-innstillinger er kontrollert.
+
+Det er ikke nødvendig å endre repoets navn for å bruke rotstien på eget domene.
+Behold eksisterende Google-klient, Turnstile-widget, Worker og D1-database.
+
+## DNS-bytte og åpning
+
+DNS-ansvarlig tar først en privat kopi av eksisterende DNS-poster og TTL-er.
+Registraren og den aktive DNS-leverandøren kan være ulike; kontroller autoritative
+navnetjenere før endring. Ikke bytt navnetjenere som en del av denne flyttingen.
+
+- Etter eksplisitt avtale flyttes bare nettstedets apex-/www-poster til GitHub
+  Pages etter GitHubs gjeldende A/AAAA/CNAME-anvisninger. www-CNAME skal peke til
+  `hellemyrfau.github.io`, uten protokoll eller `/nettside/`. Fjern motstridende
+  gamle nettstedsposter; behold MX/TXT, andre tjenester og Netlify som retrett.
+- Vent på DNS og GitHubs HTTPS-sertifikat. Kontroller apex og www, HTTPS,
+  ressursfiler, PDF-er og `/admin/`. Aktiver Enforce HTTPS når sertifikatet er klart.
+  Ikke regn midlertidig manglende sertifikat som ferdig lansering.
 - Gjennomgå databehandleravtaler og overføringsgrunnlag for Cloudflare, Google og
-  GitHub. Oppdater personvernteksten hvis den faktiske konfigurasjonen avviker.
-  D1-meldinger lagres i EU; Worker, botsjekk og Google-innlogging er ikke lovet
-  EU-eksklusiv behandling. Ikke aktiver analyseverktøy som del av denne flyttingen.
-- Etter eksplisitt avtale om lansering: sett `SUBMISSION_ORIGINS` til
-  `https://hellemyrfau.no,https://www.hellemyrfau.no`, `TURNSTILE_HOSTNAMES` til
-  `hellemyrfau.no,www.hellemyrfau.no`, og `SUBMISSIONS_OPEN` til `"true"` i
-  `wrangler.jsonc`. Fjern preview-origin fra `ALLOWED_ORIGINS`, og publiser Worker.
-  Av/på-bryteren alene åpner aldri et domene utenfor `SUBMISSION_ORIGINS`.
-- Bruk bare oppdiktede saker: send anonymt og med e-post, logg inn som godkjent
-  admin, endre ansvarlig/status, legg til svar og interne notater, slett saken.
-  Kontroller at svar bare åpner e-postprogrammet og ikke sendes automatisk.
-- Prøv ugyldig innlogging, botsjekkfeil, nettverksfeil, dobbeltklikk og mange
-  innsendinger. Ingen bekreftelse skal vises ved feil; utkast skal beholdes.
-- Kontroller mobil og stor skjerm, PDF-er, hash-navigasjon, /admin, 404 og HTTPS.
-  /admin kan bli kanonisert til /admin/. Begge skal åpne samme innboks.
-- Kontroller at ingen gamle Netlify-integrasjoner er aktive. Avvikle eventuelt
-  Netlify-prosjekt først etter godkjent test. Ingen saker skal flyttes derfra.
-- GitHub Pages støtter ikke vilkårlige HTTP-headere fra vårt repo. Tidligere
-  Netlify-headere som X-Frame-Options og Permissions-Policy er derfor ikke
-  automatisk videreført. Admin har noindex i HTML; dette er ikke tilgangskontroll.
+  GitHub. Oppdater personvernteksten hvis faktisk konfigurasjon avviker.
+- Mottaket er fortsatt stengt etter DNS-bytte. Når HTTPS og innlogging er godkjent
+  og åpning er eksplisitt avtalt, sett `SUBMISSIONS_OPEN` til `"true"` gjennom en
+  PR og publiser gjennomgått Worker. Behold sluttoriginene i `SUBMISSION_ORIGINS`
+  og sluttvertene i `TURNSTILE_HOSTNAMES`. Ikke åpne igjen for github.io.
+- Test med oppdiktet sak, slett den etterpå, og bekreft at svar bare åpner
+  e-postprogrammet; ingen e-post sendes automatisk.
+- Avvikling av Netlify er et separat steg etter godkjent drift. Ikke fjern gammel
+  hosting eller domenetilknytning under DNS-bytte. Ved behov gjenopprettes bare de
+  lagrede nettstedspostene; behold Worker-data og øvrige DNS-poster.
+- GitHub Pages støtter ikke vilkårlige HTTP-headere fra repoet. Tidligere
+  Netlify-headere er ikke automatisk videreført. Admin-noindex er ikke tilgangskontroll.
 
 ## Daglig drift og tilgang
 
