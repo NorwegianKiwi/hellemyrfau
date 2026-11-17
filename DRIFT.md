@@ -66,7 +66,7 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
    indeksere siden; den er fortsatt offentlig tilgjengelig. Netlify og DNS endres
    ikke av Pages-publisering. Stans Netlifys automatiske publisering, eller suspender
    Netlify-appen i GitHub-organisasjonen, før flere endringer merges.
-10. Start workflowen «Kontroller bygg» manuelt på main etter oppsettet, eller la
+10. Start workflowen «Build and deploy site» manuelt på main etter oppsettet, eller la
     neste gjennomgåtte endring på main utløse publisering. PR-er kjører kontroller,
     men publiseres ikke. Statisk forhåndsvisning trenger ikke API-nøklene. API-forhåndsvisning og
     produksjonsbygg stopper med feil hvis de offentlige API-variablene mangler.
@@ -100,7 +100,7 @@ For github.io må følgende være lagret:
    Behold Managed og pre-clearance avslått; ikke hent eller roter secret.
 3. For github.io-bygget: `PAGES_PREVIEW_API=true`, `PAGES_PRODUCTION` tom/false,
    og de eksisterende offentlige API-variablene i GitHub Actions. Kjør
-   «Kontroller bygg» på main. Bygget beholder `/nettside/`, noindex og ingen CNAME.
+   «Build and deploy site» på main. Bygget beholder `/nettside/`, noindex og ingen CNAME.
 
 Worker-publisering åpner API-mottaket for alle tre originene. Den flytter ikke
 DNS eller Netlify-nettstedet. Når produksjonsbygg og Custom domain senere aktiveres,
@@ -144,7 +144,7 @@ Dette kan gjøres før den som har DNS-tilgang er tilgjengelig:
    rotstier og fungerer ikke lenger som `/nettside/`-preview. Når Custom domain
    lagres, videresender github.io-adressen til hellemyrfau.no (fortsatt Netlify
    fram til DNS-bytte). Netlifys publiserte nettsted og DNS endres ikke av dette.
-5. Sett `PAGES_PRODUCTION=true` i GitHub Actions-variablene og kjør «Kontroller bygg»
+5. Sett `PAGES_PRODUCTION=true` i GitHub Actions-variablene og kjør «Build and deploy site»
    på main. Vent på vellykket Pages-publisering. Bygget har rotstier, endelig
    API-originliste og ingen preview-noindex på offentlig innhold. Admin beholder
    noindex. Det genererte CNAME er ikke en erstatning for Pages-innstillingen.
