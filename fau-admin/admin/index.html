@@ -362,7 +362,7 @@ import { request } from "/assets/api.js";
     const t = tekst.value.trim(); if (!t) return;
     const s = saker.find(x => x.id === valgt);
     $("send").disabled = true;
-    const sak = await endre(modus === "notat" ? { notatNy: t } : { svar: t, ansvarlig: s.ansvarlig || (meg && meg.epost) });
+    const sak = await endre(modus === "notat" ? { notatNy: t } : { svar: t, ...(!s.ansvarlig && meg ? { ansvarlig: meg.epost } : {}) });
     if (!sak) { $("send").disabled = false; return; }
     if (modus === "svar" && sak.epost) { epostKlar[sak.id] = sak.svar.length - 1; tegnTrad(); }
     tekst.value = ""; tekst.style.height = "auto";

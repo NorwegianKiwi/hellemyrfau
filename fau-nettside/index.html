@@ -1535,7 +1535,7 @@
 </footer>
 
 <script type="module">
-import { enabled as kanSende, request, submissionId, clearSubmission } from "/assets/api.js";
+import { enabled as kanSende, request, submissionId, clearSubmission, pendingSubmission } from "/assets/api.js";
 import { challenge } from "/assets/turnstile.js";
   /* ============ INNHOLD ============ */
 
@@ -1866,7 +1866,7 @@ import { challenge } from "/assets/turnstile.js";
     "sections": [
       {
         "heading": "Hva vi samler inn",
-        "body_html": "<p>Når du bruker «Send inn en sak»-skjemaet, lagres meldingen og eventuelt navn, e-post og trinn i Cloudflare D1 i EU. Bare godkjente FAU-administratorer og tekniske driftsansvarlige har tilgang. Nettsiden leveres av GitHub Pages. Et utkast med melding og tema lagres på din enhet til du sender eller tømmer skjemaet.</p><ul><li><strong>Formål:</strong> å behandle saken din og svare deg hvis du har oppgitt e-post.</li><li><strong>Lagring:</strong> Aktive saker beholdes mens de behandles. Arkiverte saker, svar og interne notater slettes automatisk etter 12 måneder. Gjenåpnes en sak, starter fristen på nytt ved neste arkivering. Private sikkerhetskopier oppbevares i inntil 30 dager. Unngå sensitive opplysninger om barn eller andre personer i skjemaet.</li><li><strong>Innlogging og botsjekk:</strong> Administratorer logger inn med Google. Cloudflare Turnstile beskytter skjemaet mot roboter, og IP-adresse brukes kortvarig til å begrense gjentatte innsendinger. Disse tjenestene og serverfunksjonen kan behandle tekniske opplysninger utenfor EU, selv om meldingsdatabasen ligger i EU.</li><li><strong>Dine rettigheter:</strong> Du kan kontakte FAU om innsyn, retting eller sletting. Ved helt anonym innsending kan vi trenge opplysninger fra deg for å finne saken.</li><li><strong>Behandlingsansvarlig:</strong> FAU ved Hellemyr skole. Har du spørsmål om personvern, bruk «Meld inn sak» eller si fra til klassekontakten.</li></ul>"
+        "body_html": "<p>Når du bruker «Send inn en sak»-skjemaet, lagres meldingen og eventuelt navn, e-post og trinn i Cloudflare D1 i EU. Bare godkjente FAU-administratorer og tekniske driftsansvarlige har tilgang. Nettsiden leveres av GitHub Pages. Et utkast med melding og tema lagres på din enhet til du sender eller tømmer skjemaet. Når du prøver å sende, beholdes også hele sendeforsøket, inkludert eventuelt navn, e-post og trinn, i den åpne fanens økt slik at du kan prøve igjen etter omlasting. Denne kopien slettes når sendingen er bekreftet, skjemaet nullstilles eller faneøkten avsluttes.</p><ul><li><strong>Formål:</strong> å behandle saken din og svare deg hvis du har oppgitt e-post.</li><li><strong>Lagring:</strong> Aktive saker beholdes mens de behandles. Arkiverte saker, svar og interne notater slettes automatisk etter 12 måneder. Gjenåpnes en sak, starter fristen på nytt ved neste arkivering. Private sikkerhetskopier oppbevares i inntil 30 dager. Unngå sensitive opplysninger om barn eller andre personer i skjemaet.</li><li><strong>Innlogging og botsjekk:</strong> Administratorer logger inn med Google. Cloudflare Turnstile beskytter skjemaet mot roboter, og IP-adresse brukes kortvarig til å begrense gjentatte innsendinger. Disse tjenestene og serverfunksjonen kan behandle tekniske opplysninger utenfor EU, selv om meldingsdatabasen ligger i EU.</li><li><strong>Dine rettigheter:</strong> Du kan kontakte FAU om innsyn, retting eller sletting. Ved helt anonym innsending kan vi trenge opplysninger fra deg for å finne saken.</li><li><strong>Behandlingsansvarlig:</strong> FAU ved Hellemyr skole. Har du spørsmål om personvern, bruk «Meld inn sak» eller si fra til klassekontakten.</li></ul>"
       },
       {
         "heading": "Det vi ikke gjør",
@@ -2848,15 +2848,25 @@ import { challenge } from "/assets/turnstile.js";
     if (typeof sakDialog.showModal !== "function") { location.hash = "#/kontakt"; return; }
     if (sakNaa === 4) nullstillSak();
     if (!sakMelding.value) {
-      try {
-        const u = JSON.parse(localStorage.getItem(UTKAST_NOKKEL) || "null");
-        if (u && u.melding) {
-          sakMelding.value = u.melding;
-          const r = u.tema && sakSkjema.querySelector('input[name="tema"][value="' + u.tema + '"]');
-          if (r) r.checked = true;
-          document.getElementById("sd-lagret").textContent = "Vi tok vare på utkastet ditt.";
-        }
-      } catch (e) {}
+      const pending = pendingSubmission();
+      if (pending) {
+        sakSkjema.querySelectorAll("input, textarea").forEach(control => {
+          if (!Object.hasOwn(pending, control.name)) return;
+          if (control.type === "radio") control.checked = control.value === pending[control.name];
+          else control.value = pending[control.name];
+        });
+        document.getElementById("sd-lagret").textContent = "Vi tok vare på sendeforsøket ditt. Du kan prøve igjen.";
+      } else {
+        try {
+          const u = JSON.parse(localStorage.getItem(UTKAST_NOKKEL) || "null");
+          if (u && u.melding) {
+            sakMelding.value = u.melding;
+            const r = u.tema && sakSkjema.querySelector('input[name="tema"][value="' + u.tema + '"]');
+            if (r) r.checked = true;
+            document.getElementById("sd-lagret").textContent = "Vi tok vare på utkastet ditt.";
+          }
+        } catch (e) {}
+      }
     }
     if (valg.tema) {
       const r = sakSkjema.querySelector('input[name="tema"][value="' + valg.tema + '"]');

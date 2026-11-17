@@ -24,12 +24,18 @@ export async function request(path, { method = "GET", token, data } = {}) {
   return result;
 }
 
-// Bare ID og innholdsfingeravtrykk lagres her, ikke navn/e-post eller selve meldingen.
+// Et ubekreftet sendeforsøk beholdes i fanens økt, slik at hele innholdet og ID-en
+// kan gjenopprettes etter omlasting. Fjernes ved bekreftet sending eller nullstilling.
 let attempt;
+export function pendingSubmission() {
+  if (!attempt) { try { attempt = JSON.parse(sessionStorage.getItem("fau-innsending")); } catch {} }
+  return attempt?.fields;
+}
 export async function submissionId(fields) {
   const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(fields))))).map(b => b.toString(16).padStart(2, "0")).join("");
-  if (!attempt) { try { attempt = JSON.parse(sessionStorage.getItem("fau-innsending")); } catch {} }
+  pendingSubmission();
   if (!attempt || attempt.hash !== hash) attempt = { hash, id: crypto.randomUUID() };
+  attempt.fields = { ...fields };
   try { sessionStorage.setItem("fau-innsending", JSON.stringify(attempt)); } catch {}
   return attempt.id;
 }

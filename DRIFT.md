@@ -112,6 +112,12 @@ hos Cloudflare, Google og GitHub. Google-token ligger bare i adminnettleserens
 sessionStorage til utlogging/utløp. Foreldre trenger ingen konto. IP-adresse brukes
 kortvarig som nøkkel i Cloudflares trafikkbegrenser, ikke i saksdatabasen.
 
+Et ubekreftet sendeforsøk lagres med hele skjemainnholdet (også eventuelt navn,
+e-post og trinn), fingeravtrykk og UUID i fanens sessionStorage. Ved omlasting
+gjenopprettes innholdet sammen med ID-en, slik at nytt forsøk ikke lager en kopi.
+Denne kopien fjernes ved bekreftet sending, nullstilling eller når faneøkten
+avsluttes. Det vanlige utkastet i localStorage inneholder bare melding og tema.
+
 ## Sikkerhetskopi og gjenoppretting
 
 Én navngitt driftsansvarlig tar månedlig eksport til privat, tilgangsbegrenset og

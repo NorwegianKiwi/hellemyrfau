@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { handleRequest, purgeArchived, archiveCutoff, verifyTurnstile } from '../worker/index.mjs';
 import { authenticate, verifyGoogleToken } from '../worker/auth.mjs';
 import { SignJWT, generateKeyPair } from 'jose';
@@ -128,6 +129,47 @@ test('admin lagrer samtidige notater, svar, ansvarlig og historikk uten å ersta
   assert.equal(env.DB.sqlite.prepare('SELECT arkivert FROM saker').get().arkivert, null);
   assert.equal((await call('/api/admin', 'DELETE', { id: message.id })).status, 200);
   assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM hendelser').get().n, 0);
+});
+
+test('svarskjema beholder tidligere ansvarlig etter at administratorens tilgang fjernes', async () => {
+  const { env, call, message } = setup();
+  const previousOwner = 'tidligere@example.test';
+  env.ADMIN_EPOSTER += ',' + previousOwner;
+  await call('/api/saker', 'POST', message);
+  const assigned = await call('/api/admin', 'POST', { id: message.id, ansvarlig: previousOwner });
+  assert.equal(assigned.status, 200);
+  const { sak } = await assigned.json();
+  env.ADMIN_EPOSTER = user.epost;
+
+  const html = readFileSync(new URL('../fau-admin/admin/index.html', import.meta.url), 'utf8');
+  const handler = html.slice(html.indexOf('  $("skriv").addEventListener("submit",'), html.indexOf('  $("logg-ut").addEventListener'));
+  let submit, sent;
+  const context = {
+    $: () => ({ addEventListener: (event, callback) => { submit = callback; } }),
+    tekst: { value: 'Svar fra nåværende administrator', style: {} },
+    saker: [sak], valgt: message.id, modus: 'svar', meg: user,
+    endre: async data => {
+      sent = data;
+      const response = await call('/api/admin', 'POST', { id: message.id, ...data });
+      assert.equal(response.status, 200);
+      return (await response.json()).sak;
+    }
+  };
+  runInNewContext(handler, context);
+  await submit({ preventDefault() {} });
+  assert.equal('ansvarlig' in sent, false);
+  const result = await (await call('/api/admin')).json();
+  assert.equal(result.saker[0].ansvarlig, previousOwner);
+  assert.equal(result.saker[0].svar.length, 1);
+  assert.equal(result.saker[0].status, 'besvart');
+  assert.equal(result.saker[0].logg.length, 2);
+  assert.equal((await call('/api/admin', 'POST', { id: message.id, ansvarlig: previousOwner })).status, 400);
+
+  await call('/api/admin', 'POST', { id: message.id, ansvarlig: '' });
+  context.saker[0].ansvarlig = '';
+  context.tekst.value = 'Svar på sak uten ansvarlig';
+  await submit({ preventDefault() {} });
+  assert.equal(sent.ansvarlig, user.epost);
 });
 
 test('feil i historikklagring ruller tilbake statusendring; detaljer lekkes ikke', async () => {
