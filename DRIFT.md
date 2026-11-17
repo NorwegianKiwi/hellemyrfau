@@ -61,19 +61,89 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
 9. Velg GitHub Actions som kilde under Settings → Pages. La Custom domain være
    tom under forhåndsvisningen. Uten `PAGES_PRODUCTION=true` bygges siden for
    `https://hellemyrfau.github.io/nettside/`, med riktige ressursstier, ingen CNAME,
-   og innsending og admin deaktivert. Forhåndsvisningen ber søkemotorer om ikke å
+   og innsending og admin deaktivert med mindre `PAGES_PREVIEW_API=true`. Forhåndsvisningen ber søkemotorer om ikke å
    indeksere siden; den er fortsatt offentlig tilgjengelig. Netlify og DNS endres
    ikke av Pages-publisering. Stans Netlifys automatiske publisering, eller suspender
    Netlify-appen i GitHub-organisasjonen, før flere endringer merges.
 10. Start workflowen «Kontroller bygg» manuelt på main etter oppsettet, eller la
     neste gjennomgåtte endring på main utløse publisering. PR-er kjører kontroller,
-    men publiseres ikke. Forhåndsvisning trenger ikke API-nøklene. Produksjonsbygg
-    stopper med feil hvis de offentlige API-variablene mangler.
+    men publiseres ikke. Statisk forhåndsvisning trenger ikke API-nøklene. API-forhåndsvisning og
+    produksjonsbygg stopper med feil hvis de offentlige API-variablene mangler.
 
-Før full funksjonstest på preview-adressen må Google-klienten, Turnstile-widgeten,
-Workerens origin-/vertslister og nettsidens genererte API-konfigurasjon utvides for
-preview-adressen. Ikke bruk `PAGES_PRODUCTION` til dette: den bryteren bygger for
-det endelige domenet og rotstien.
+## Funksjonstest på GitHub-forhåndsvisningen
+
+Netlify betjener fortsatt det offentlige domenet. Behold Netlify-appen suspendert.
+Ikke endre DNS, Pages Custom domain eller `PAGES_PRODUCTION` i denne prosedyren.
+Gjennomgå og merge PR-en først; Worker publiseres manuelt fra gjennomgått kode.
+Ingen Worker-publisering eller åpning av mottak skjer ved merge alene.
+
+1. I Google Cloud Console, velg prosjektet **Hellemyr FAU** (`hellemyr-fau`).
+   Åpne Google Auth Platform → Clients og den eksisterende webklienten med ID
+   `357870358336-hcfhdi298sgebtmfnjs4g0uasu897357.apps.googleusercontent.com`.
+   Legg til `https://hellemyrfau.github.io` under **Authorized JavaScript origins**
+   og lagre. Behold de eksisterende originene. Ingen `/nettside/` eller `/admin/`
+   i origin, ingen redirect URI: innloggingen bruker JavaScript-callback.
+   Ingen Google client secret trengs eller skal hentes ut. Under Audience →
+   Test users kan de to avtalte administratorene legges til ved behov mens appen
+   har status External/Testing. Workerens eksakte e-postliste gjelder fortsatt.
+2. I Cloudflare-kontoen **Hellemyr FAU**, åpne Turnstile og den eksisterende widgeten
+   med site key `0x4AAAAAAGCd9rU6xcCb_d32`. Under **Hostname Management → Add Hostnames**
+   legg til `hellemyrfau.github.io` og lagre. Bruk bare vertsnavnet, uten protokoll
+   eller sti. Behold eksisterende verter, Managed-modus og pre-clearance avslått.
+   Ikke roter eller vis den hemmelige nøkkelen.
+3. Kontroller `wrangler.jsonc`: `ALLOWED_ORIGINS` inkluderer preview-origin;
+   `TURNSTILE_HOSTNAMES` og `SUBMISSION_ORIGINS` tillater **bare preview-verten/origin**.
+   `SUBMISSIONS_OPEN` står fortsatt til `false`. Publiser først med stengt mottak:
+
+   ```sh
+   npm run check:worker
+   npm run deploy:worker
+   ```
+
+   Dette bruker eksisterende Worker, D1-binding og lagrede secrets. Ingen ny
+   database, migrering eller secret er nødvendig. Origin-listen for API-tilgang
+   åpner ikke innsending alene; POST krever også at origin finnes i
+   `SUBMISSION_ORIGINS`, at `SUBMISSIONS_OPEN=true`, og gyldig Turnstile.
+4. I GitHub Settings → Secrets and variables → Actions → Variables, sett
+   `PAGES_PREVIEW_API=true`. Behold `PAGES_PRODUCTION` tom/false. De eksisterende
+   `PUBLIC_API_BASE` og `PUBLIC_TURNSTILE_SITE_KEY` brukes. Start «Kontroller bygg»
+   manuelt på main. API-bygget beholder `/nettside/`, noindex og ingen CNAME, og
+   tillater bare `https://hellemyrfau.github.io` i nettlesermodulen.
+   Åpne `https://hellemyrfau.github.io/nettside/admin/` og test Google-innlogging.
+5. Når testerne er klare, åpne preview-mottaket eksplisitt fra gjennomgått kode:
+
+   ```sh
+   npx wrangler deploy --env "" --var SUBMISSIONS_OPEN:true
+   ```
+
+   Dette overstyrer bare av/på-bryteren i denne publiseringen. De endelige domenene
+   avvises fortsatt av `SUBMISSION_ORIGINS`; Turnstile godtas bare fra preview-verten.
+   Preview er offentlig tilgjengelig: alle med adressen kan sende testmeldinger
+   når mottaket er åpent. CORS/Origin er ikke en privat testerinnlogging eller
+   beskyttelse mot forfalskede HTTP-klienter. Bruk en kort testperiode og bare
+   oppdiktede opplysninger, f.eks. melding med prefikset «TEST – SLETT».
+6. Test anonym melding og oppdiktet kontaktinformasjon, admininnlogging,
+   status/ansvarlig, svar, notat og sletting. Test også avvist innlogging og feil i
+   botsjekk. Bekreft på mobil og stor skjerm. Svar lagres; e-post sendes ikke automatisk.
+   Slett testsakene enkeltvis i admin etterpå, ikke slett hele databasen.
+7. Steng testmottaket med `npm run deploy:worker` (repoets `SUBMISSIONS_OPEN=false`).
+   Vanlig Worker-publisering stenger dermed et tidligere åpnet testmottak igjen.
+   Sett eventuelt `PAGES_PREVIEW_API=false` og kjør Pages-workflowen for å deaktivere
+   API-et i nettsiden også. Bare å deaktivere frontend stenger ikke Worker-mottaket.
+
+### Hvor testmeldinger lagres
+
+Preview bruker **samme** EU D1-database `hellemyrfau-saker`
+(`aa3623ae-14fa-476d-b6aa-576b812b3b3f`), ikke en separat testdatabase.
+Meldinger lagres i `saker`, svar/notater/historikk i `hendelser`. Begge avtalte
+administratorer ser samme innboks. Data lagres ikke i GitHub eller Netlify.
+Det finnes ingen automatisk testmerking; slett kjente testsaker i admin før
+lansering. Arkivering er ikke umiddelbar sletting: arkiverte saker slettes etter
+12 måneder. Vanlige lokale utkast og ubekreftede sendeforsøk følger nettleserlagringen
+beskrevet under daglig drift.
+
+Oppsettet over flytter ikke live-nettstedet. Før domeneflytting eller annen endring
+som kan påvirke live-nettstedet, varsle eieren og innhent eksplisitt avtale.
 
 Ingen domeneflytting til Cloudflare er nødvendig i denne versjonen. Cloudflare
 leverer API-et, og GitHub Pages leverer nettsiden. API-et tillater bare nettleser-
@@ -94,8 +164,11 @@ administratorlisten på serveren.
   GitHub. Oppdater personvernteksten hvis den faktiske konfigurasjonen avviker.
   D1-meldinger lagres i EU; Worker, botsjekk og Google-innlogging er ikke lovet
   EU-eksklusiv behandling. Ikke aktiver analyseverktøy som del av denne flyttingen.
-- Sett `SUBMISSIONS_OPEN` til `"true"` i produksjonsvars i `wrangler.jsonc`, og
-  publiser Worker. Dette er også av/på-bryteren ved feil eller spam.
+- Etter eksplisitt avtale om lansering: sett `SUBMISSION_ORIGINS` til
+  `https://hellemyrfau.no,https://www.hellemyrfau.no`, `TURNSTILE_HOSTNAMES` til
+  `hellemyrfau.no,www.hellemyrfau.no`, og `SUBMISSIONS_OPEN` til `"true"` i
+  `wrangler.jsonc`. Fjern preview-origin fra `ALLOWED_ORIGINS`, og publiser Worker.
+  Av/på-bryteren alene åpner aldri et domene utenfor `SUBMISSION_ORIGINS`.
 - Bruk bare oppdiktede saker: send anonymt og med e-post, logg inn som godkjent
   admin, endre ansvarlig/status, legg til svar og interne notater, slett saken.
   Kontroller at svar bare åpner e-postprogrammet og ikke sendes automatisk.
@@ -194,3 +267,7 @@ Gjeldende leverandørdokumentasjon:
 - https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
 - https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
 - https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site
+
+Dokumentasjon for preview-oppsett:
+- https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid
+- https://developers.cloudflare.com/turnstile/additional-configuration/hostname-management/

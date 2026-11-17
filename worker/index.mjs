@@ -56,7 +56,8 @@ export async function verifyTurnstile(token, env) {
 }
 
 async function submit(req, env, services) {
-  if (env.SUBMISSIONS_OPEN !== "true" || !env.TURNSTILE_SECRET_KEY || !env.TURNSTILE_HOSTNAMES) fail(503, "Innsending er ikke åpnet ennå. Prøv igjen senere.");
+  // API-/admintilgang åpner ikke mottak: innsending har en egen, eksplisitt originliste.
+  if (env.SUBMISSIONS_OPEN !== "true" || !list(env.SUBMISSION_ORIGINS).includes(req.headers.get("origin")) || !env.TURNSTILE_SECRET_KEY || !env.TURNSTILE_HOSTNAMES) fail(503, "Innsending er ikke åpnet ennå. Prøv igjen senere.");
   const ip = req.headers.get("cf-connecting-ip");
   if (!ip || !env.SUBMISSION_LIMITER) fail(503, "Innsending er midlertidig utilgjengelig.");
   const { success } = await env.SUBMISSION_LIMITER.limit({ key: ip });

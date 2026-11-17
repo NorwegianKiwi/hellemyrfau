@@ -66,6 +66,27 @@ test('bygg publiserer bare offentlige filer og isolerer forhåndsvisninger', asy
   }
   assert.match(await read('dist/index.html'), /href=\\"\/nettside\/moter\.ics/);
   assert.match(await read('dist/index.html'), /request\("\/api\/saker"/);
+  const previewEnv = { PUBLIC_BASE_PATH: '/nettside/', PUBLIC_API_BASE: 'https://api.example.workers.dev', PUBLIC_TURNSTILE_SITE_KEY: 'public-key' };
+  assert.equal(runBuild(['--preview-api']).status, 1);
+  assert.equal(runBuild(['--preview-api'], { ...previewEnv, PUBLIC_BASE_PATH: '/' }).status, 1);
+  assert.equal(runBuild(['--preview-api', '--production'], previewEnv).status, 1);
+  assert.equal(runBuild(['--preview-api', '--local'], previewEnv).status, 1);
+  assert.equal(runBuild(['--preview-api'], { ...previewEnv, PUBLIC_API_BASE: '' }).status, 1);
+  assert.equal(runBuild(['--preview-api'], { ...previewEnv, PUBLIC_API_BASE: 'http://api.test' }).status, 1);
+  assert.equal(runBuild(['--preview-api'], { ...previewEnv, PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA' }).status, 1);
+  result = runBuild(['--preview-api'], previewEnv);
+  assert.equal(result.status, 0, result.stderr);
+  config = await read('dist/assets/config.js');
+  assert.match(config, /"enabled":true/);
+  assert.match(config, /"allowedSiteOrigins":\["https:\/\/hellemyrfau.github.io"\]/);
+  assert.doesNotMatch(config, /"https:\/\/(?:www\.)?hellemyrfau.no"|localhost/);
+  assert.ok(!(await readdir(resolve(root, 'dist'))).includes('CNAME'));
+  assert.equal(await read('dist/robots.txt'), 'User-agent: *\nDisallow: /\n');
+  for (const file of ['index.html', 'admin/index.html']) {
+    const html = await read('dist/' + file);
+    assert.match(html, /name="robots" content="noindex, nofollow"/);
+    assert.match(html, /from "\/nettside\/assets\/api\.js"/);
+  }
   assert.equal(runBuild([], { PUBLIC_BASE_PATH: '//other.test/' }).status, 1);
   assert.equal(runBuild([], { PUBLIC_BASE_PATH: '/../' }).status, 1);
   assert.equal(runBuild().status, 0);

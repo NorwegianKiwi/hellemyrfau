@@ -7,6 +7,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:preview-api": "node scripts/build.mjs --preview-api",
     "build:production": "node scripts/build.mjs --production",
     "build:local": "node scripts/build.mjs --local",
     "dev:api": "wrangler dev --env local",
