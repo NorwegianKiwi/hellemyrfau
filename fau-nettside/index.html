@@ -2952,7 +2952,10 @@ import { challenge } from "/assets/turnstile.js";
     send.classList.add("sender");
     send.querySelector("span").textContent = "Sender …";
     // Lås også tilbakeknapper og felter mens vi venter; innholdet må ikke endres under sending.
-    const fields = Object.fromEntries(new FormData(sakSkjema));
+    const formData = new FormData(sakSkjema);
+    // Botsjekkens skjulte token endres mellom forsøk og er ikke del av meldingen.
+    formData.delete("cf-turnstile-response");
+    const fields = Object.fromEntries(formData);
     const controls = [...sakSkjema.querySelectorAll("input, textarea, button")];
     const previousDisabled = controls.map(control => control.disabled);
     controls.forEach(control => { control.disabled = true; });
