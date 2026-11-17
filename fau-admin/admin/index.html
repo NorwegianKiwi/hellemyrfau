@@ -192,7 +192,8 @@
 </aside>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script>
+<script type="module">
+import { request } from "/assets/api.js";
 (() => {
   const STATUSER = ["ny", "under behandling", "besvart", "arkivert"];
   const STATUSNAVN = { "ny": "Ny", "under behandling": "Under behandling", "besvart": "Besvart", "arkivert": "Arkivert" };
@@ -218,12 +219,17 @@
   const mailto = (s, t) => "mailto:" + encodeURIComponent(s.epost) + "?subject=" + encodeURIComponent("Svar fra FAU Hellemyr: " + (s.tema || "saken din")) + "&body=" + encodeURIComponent(t + "\n\nVennlig hilsen\n" + (meg ? meg.navn : "") + "\nFAU Hellemyr");
 
   async function api(metode, body) {
-    const r = await fetch("/api/admin", { method: metode, headers: { authorization: "Bearer " + token, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
-    const d = await r.json().catch(() => ({}));
-    if (r.status === 401) { loggUt(d.feil || "Økten er utløpt. Logg inn på nytt."); throw new Error("401"); }
-    if (!r.ok) throw new Error(d.feil || "Noe gikk galt.");
-    return d;
+    try {
+      return await request("/api/admin", { method: metode, token, data: body });
+    } catch (error) {
+      if (error.status === 401) {
+        loggUt(error.message);
+        throw new Error("401");
+      }
+      throw error;
+    }
   }
+
   function loggUt(melding) {
     token = null; saker = []; valgt = null;
     try { sessionStorage.removeItem("fau-admin-token"); } catch (e) {}
@@ -285,7 +291,6 @@
     const hendelser = [{ type: "inn", tid: s.mottatt, tekst: s.melding }]
       .concat((s.svar || []).map((v, i) => ({ type: "ut", tid: v.tid, tekst: v.tekst, hvem: v.hvem, nr: i })))
       .concat((s.notater || []).map(v => ({ type: "notat", tid: v.tid, tekst: v.tekst, hvem: v.hvem })))
-      .concat(s.notat ? [{ type: "notat", tid: s.mottatt, tekst: s.notat, hvem: "Notat" }] : [])
       .sort((a, b) => a.tid.localeCompare(b.tid));
     let forrigeDag = "";
     const sisteSvar = (s.svar || []).length - 1;
@@ -357,7 +362,7 @@
     const t = tekst.value.trim(); if (!t) return;
     const s = saker.find(x => x.id === valgt);
     $("send").disabled = true;
-    const sak = await endre(modus === "notat" ? { notatNy: t } : { svar: t, ansvarlig: s.ansvarlig || (meg && meg.epost) });
+    const sak = await endre(modus === "notat" ? { notatNy: t } : { svar: t, ...(!s.ansvarlig && meg ? { ansvarlig: meg.epost } : {}) });
     if (!sak) { $("send").disabled = false; return; }
     if (modus === "svar" && sak.epost) { epostKlar[sak.id] = sak.svar.length - 1; tegnTrad(); }
     tekst.value = ""; tekst.style.height = "auto";
@@ -365,7 +370,7 @@
   $("logg-ut").addEventListener("click", () => loggUt());
 
   async function start() {
-    const { klientId } = await (await fetch("/api/admin/konfig")).json();
+    const { klientId } = await request("/api/admin/konfig");
     if (!klientId) { $("google-knapp").innerHTML = '<p class="feil">Innloggingen er ikke satt opp ennå.</p>'; return; }
     try { const t = sessionStorage.getItem("fau-admin-token"); if (t) { token = t; await hent(); } } catch (e) { token = null; }
     const vent = () => window.google?.accounts?.id ? init() : setTimeout(vent, 100);
@@ -379,7 +384,7 @@
     };
     vent();
   }
-  start();
+  start().catch(error => { $("inn-feil").hidden = false; $("inn-feil").textContent = error.message || "Kunne ikke starte innloggingen. Prøv igjen."; });
 })();
 </script>
 </body>

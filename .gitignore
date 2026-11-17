@@ -1,6 +1,8 @@
 # Lokale filer og verktøy
 .DS_Store
-.netlify/
+.wrangler/
+.dev.vars*
+!.dev.vars.example
 node_modules/
 *.log
 
@@ -13,7 +15,6 @@ node_modules/
 *.key
 
 # Genererte funksjoner og publiseringsfiler
-fau-admin/netlify-funksjoner/bygg/
 fau-nettside/admin/
 dist/
 build/

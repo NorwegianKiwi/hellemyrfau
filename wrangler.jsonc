@@ -1,0 +1,53 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hellemyrfau-api",
+  "account_id": "5c29efbec4af2dca2c69ac34a8ef91c8",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-11-15",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": false },
+  "triggers": { "crons": ["15 3 * * *"] },
+  "vars": {
+    "ALLOWED_ORIGINS": "https://hellemyrfau.no,https://www.hellemyrfau.no",
+    "GOOGLE_CLIENT_ID": "357870358336-hcfhdi298sgebtmfnjs4g0uasu897357.apps.googleusercontent.com",
+    "TURNSTILE_HOSTNAMES": "hellemyrfau.no,www.hellemyrfau.no",
+    "SUBMISSIONS_OPEN": "false"
+  },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "hellemyrfau-saker",
+    "database_id": "aa3623ae-14fa-476d-b6aa-576b812b3b3f",
+    "jurisdiction": "eu",
+    "migrations_dir": "worker/migrations"
+  }],
+  "ratelimits": [{
+    "name": "SUBMISSION_LIMITER",
+    "namespace_id": "1001",
+    "simple": { "limit": 5, "period": 60 }
+  }],
+  "env": {
+    "local": {
+      "name": "hellemyrfau-api-local",
+      "vars": {
+        "ALLOWED_ORIGINS": "http://localhost:8000,http://127.0.0.1:8000",
+        "GOOGLE_CLIENT_ID": "",
+        "ADMIN_EPOSTER": "",
+        "TURNSTILE_HOSTNAMES": "localhost,127.0.0.1",
+        "TURNSTILE_SECRET_KEY": "1x0000000000000000000000000000000AA",
+        "SUBMISSIONS_OPEN": "true"
+      },
+      "d1_databases": [{
+        "binding": "DB",
+        "database_name": "hellemyrfau-local",
+        "database_id": "00000000-0000-0000-0000-000000000001",
+        "migrations_dir": "worker/migrations"
+      }],
+      "ratelimits": [{
+        "name": "SUBMISSION_LIMITER",
+        "namespace_id": "1002",
+        "simple": { "limit": 5, "period": 60 }
+      }]
+    }
+  }
+}

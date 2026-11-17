@@ -2,16 +2,23 @@
   "name": "hellemyrfau",
   "private": true,
   "type": "module",
-  "engines": { "node": "24.x" },
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:production": "node scripts/build.mjs --production",
-    "test": "node --test"
+    "build:local": "node scripts/build.mjs --local",
+    "dev:api": "wrangler dev --env local",
+    "db:local": "wrangler d1 migrations apply DB --local --env local",
+    "check:worker": "wrangler deploy --env '' --dry-run --outdir build/worker",
+    "deploy:worker": "wrangler deploy --env ''",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@netlify/blobs": "8.1.0"
+    "jose": "6.2.17"
   },
   "devDependencies": {
-    "esbuild": "0.25.12"
+    "wrangler": "4.162.0"
   }
 }

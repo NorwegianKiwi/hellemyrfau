@@ -15,4 +15,6 @@ private dataeksporter i commits, issues, pull requests eller skjermbilder.
 Ved mulig datalekkasje eller sikkerhetsfeil: kontakt vedlikeholderne privat
 før detaljer publiseres. Ikke test mot ekte saker i produksjon.
 
-Publisering til Netlify avtales separat med prosjektets administrator.
+GitHub Pages publiseres fra `main` etter beståtte kontroller når oppsettet er klart.
+Cloudflare Worker og migreringer publiseres manuelt fra gjennomgått kode.
+Se [DRIFT.md](DRIFT.md).

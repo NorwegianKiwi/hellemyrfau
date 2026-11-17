@@ -1216,7 +1216,6 @@
   .sd-videre b { flex: 0 0 auto; width: 1.6rem; height: 1.6rem; border-radius: 50%; display: grid; place-items: center; background: var(--hoved); color: #fff; font-size: .8rem; }
   :root[data-theme="dark"] .sd-videre b { color: #2a1620; }
   @media not all { :root:not([data-theme="light"]) .sd-videre b { color: #2a1620; } }
-  .sd-forhand { font-size: .84rem; background: var(--fyll-bg); color: var(--fyll-ink); border: 1px dashed var(--fyll-border); border-radius: 10px; padding: .55rem .75rem; margin-top: 1rem; }
   body.sd-aapen { overflow: hidden; }
   @media (max-width: 599.98px) {
     dialog.sak-dialog { width: 100%; max-width: 100%; margin: auto 0 0; max-height: 94dvh; }
@@ -1421,13 +1420,6 @@
 
 <main id="innhold" tabindex="-1" data-accent="gran"></main>
 
-<form name="send-inn-sak" method="POST" action="/takk.html" data-netlify="true" netlify-honeypot="bot-felt" hidden>
-  <input type="hidden" name="form-name" value="send-inn-sak">
-  <input name="bot-felt"><select name="tema"><option>Barnas digitale hverdag</option><option>Skolegården og lekeapparatene</option><option>Sosiale arrangementer og tradisjoner</option><option>Skolemiljø og trivsel</option><option>Trygg skolevei</option><option>Klassen min</option><option>Jeg vil bidra</option><option>Innspill til et av prosjektene</option><option>Nytt tema – noe FAU ikke jobber med ennå</option><option>Annet</option></select><textarea name="melding"></textarea>
-  <input name="navn"><input type="email" name="epost">
-  <select name="trinn"><option>1. trinn</option><option>2. trinn</option><option>3. trinn</option><option>4. trinn</option><option>5. trinn</option><option>6. trinn</option><option>7. trinn</option><option>Kompetanseavdelingen</option><option>Gjelder hele skolen</option></select>
-</form>
-
 <nav class="skinne" id="skinne" aria-label="Seksjoner på siden" hidden></nav>
 <a class="sak-fab" id="sak-fab" href="#/kontakt"><svg class="strek-ikon" aria-hidden="true"><use href="#ik-boble"/></svg><span>Meld inn sak til FAU</span></a>
 
@@ -1451,7 +1443,6 @@
       <div class="sd-fremdrift" aria-hidden="true"><span></span><span></span><span></span></div>
       <p class="sd-steg-tekst" id="sd-steg-tekst" aria-live="polite">Steg 1 av 3</p>
       <form id="sd-skjema" novalidate>
-        <input type="hidden" name="form-name" value="send-inn-sak">
         <p class="skjult-felt" aria-hidden="true"><label>Ikke fyll ut dette feltet <input name="bot-felt" tabindex="-1" autocomplete="off"></label></p>
 
         <section class="sd-steg" data-steg="1">
@@ -1492,6 +1483,7 @@
             <label>E-post <input type="email" name="epost" autocomplete="email" inputmode="email"></label>
           </div>
           <p class="sd-personvern">Vi bruker opplysningene bare til å svare deg. <a href="#/personvern">Les om personvern</a></p>
+          <div id="sd-botsjekk"></div>
           <p class="sd-feil" id="sd-feil-3" role="alert" hidden></p>
           <div class="sd-knapper"><button type="button" class="sd-tilbake" data-til="2">← Tilbake</button><button type="submit" class="sd-send" id="sd-send"><span>Send til FAU</span><svg class="strek-ikon" aria-hidden="true"><use href="#ik-sendt"/></svg></button></div>
         </section>
@@ -1505,7 +1497,6 @@
             <li><b>2</b><span>Den tas opp på neste FAU-møte – eller sendes videre til rektor.</span></li>
             <li><b>3</b><span>La du igjen e-post, hører du fra oss.</span></li>
           </ol>
-          <p class="sd-forhand" id="sd-forhand" hidden>Forhåndsvisning: ingenting ble sendt. På hellemyrfau.no går saken rett til FAU.</p>
           <div class="sd-knapper"><button type="button" class="sd-tilbake" id="sd-ny">Send en sak til</button><button type="button" class="sd-neste" id="sd-ferdigknapp">Ferdig</button></div>
         </section>
       </form>
@@ -1543,7 +1534,9 @@
   </div>
 </footer>
 
-<script>
+<script type="module">
+import { enabled as kanSende, request, submissionId, clearSubmission, pendingSubmission } from "/assets/api.js";
+import { challenge } from "/assets/turnstile.js";
   /* ============ INNHOLD ============ */
 
   const ORGKART = `
@@ -1873,7 +1866,7 @@
     "sections": [
       {
         "heading": "Hva vi samler inn",
-        "body_html": "<p>Når du bruker «Send inn en sak»-skjemaet, lagres det du skriver (melding, og eventuelt navn, e-post og trinn) hos Netlify, som drifter siden. Innsendingene leses av FAU.</p><ul><li><strong>Formål:</strong> å behandle saken din og svare deg hvis du har oppgitt e-post.</li><li><strong>Lagring:</strong> FAU lager nå en fast rutine for hvor lenge innsendinger lagres, og hvem som har tilgang. Rutinen beskrives her når den er bestemt.</li><li><strong>Behandlingsansvarlig:</strong> FAU ved Hellemyr skole. Har du spørsmål om personvern, bruk «Meld inn sak» eller si fra til klassekontakten.</li></ul>"
+        "body_html": "<p>Når du bruker «Send inn en sak»-skjemaet, lagres meldingen og eventuelt navn, e-post og trinn i Cloudflare D1 i EU. Bare godkjente FAU-administratorer og tekniske driftsansvarlige har tilgang. Nettsiden leveres av GitHub Pages. Et utkast med melding og tema lagres på din enhet til du sender eller tømmer skjemaet. Når du prøver å sende, beholdes også hele sendeforsøket, inkludert eventuelt navn, e-post og trinn, i den åpne fanens økt slik at du kan prøve igjen etter omlasting. Denne kopien slettes når sendingen er bekreftet, skjemaet nullstilles eller faneøkten avsluttes.</p><ul><li><strong>Formål:</strong> å behandle saken din og svare deg hvis du har oppgitt e-post.</li><li><strong>Lagring:</strong> Aktive saker beholdes mens de behandles. Arkiverte saker, svar og interne notater slettes automatisk etter 12 måneder. Gjenåpnes en sak, starter fristen på nytt ved neste arkivering. Private sikkerhetskopier oppbevares i inntil 30 dager. Unngå sensitive opplysninger om barn eller andre personer i skjemaet.</li><li><strong>Innlogging og botsjekk:</strong> Administratorer logger inn med Google. Cloudflare Turnstile beskytter skjemaet mot roboter, og IP-adresse brukes kortvarig til å begrense gjentatte innsendinger. Disse tjenestene og serverfunksjonen kan behandle tekniske opplysninger utenfor EU, selv om meldingsdatabasen ligger i EU.</li><li><strong>Dine rettigheter:</strong> Du kan kontakte FAU om innsyn, retting eller sletting. Ved helt anonym innsending kan vi trenge opplysninger fra deg for å finne saken.</li><li><strong>Behandlingsansvarlig:</strong> FAU ved Hellemyr skole. Har du spørsmål om personvern, bruk «Meld inn sak» eller si fra til klassekontakten.</li></ul>"
       },
       {
         "heading": "Det vi ikke gjør",
@@ -2785,7 +2778,8 @@
   const sakMelding = document.getElementById("sd-melding");
   const sakSteg = [...sakDialog.querySelectorAll(".sd-steg")];
   const sakFremdrift = [...sakDialog.querySelectorAll(".sd-fremdrift span")];
-  const kanSende = ["hellemyrfau.no", "www.hellemyrfau.no", "hellemyr-fau.site", "www.hellemyr-fau.site"].includes(location.hostname) || location.hostname.endsWith(".netlify.app");
+  let sender = false;
+  let ventTil = 0;
   let sakNaa = 1;
 
   document.getElementById("sd-fliser").innerHTML = SAK_TEMA.map(t =>
@@ -2838,6 +2832,7 @@
   }
 
   function nullstillSak() {
+    clearSubmission();
     sakSkjema.reset();
     oppdaterValgt();
     oppdaterTeller();
@@ -2853,15 +2848,25 @@
     if (typeof sakDialog.showModal !== "function") { location.hash = "#/kontakt"; return; }
     if (sakNaa === 4) nullstillSak();
     if (!sakMelding.value) {
-      try {
-        const u = JSON.parse(localStorage.getItem(UTKAST_NOKKEL) || "null");
-        if (u && u.melding) {
-          sakMelding.value = u.melding;
-          const r = u.tema && sakSkjema.querySelector('input[name="tema"][value="' + u.tema + '"]');
-          if (r) r.checked = true;
-          document.getElementById("sd-lagret").textContent = "Vi tok vare på utkastet ditt.";
-        }
-      } catch (e) {}
+      const pending = pendingSubmission();
+      if (pending) {
+        sakSkjema.querySelectorAll("input, textarea").forEach(control => {
+          if (!Object.hasOwn(pending, control.name)) return;
+          if (control.type === "radio") control.checked = control.value === pending[control.name];
+          else control.value = pending[control.name];
+        });
+        document.getElementById("sd-lagret").textContent = "Vi tok vare på sendeforsøket ditt. Du kan prøve igjen.";
+      } else {
+        try {
+          const u = JSON.parse(localStorage.getItem(UTKAST_NOKKEL) || "null");
+          if (u && u.melding) {
+            sakMelding.value = u.melding;
+            const r = u.tema && sakSkjema.querySelector('input[name="tema"][value="' + u.tema + '"]');
+            if (r) r.checked = true;
+            document.getElementById("sd-lagret").textContent = "Vi tok vare på utkastet ditt.";
+          }
+        } catch (e) {}
+      }
     }
     if (valg.tema) {
       const r = sakSkjema.querySelector('input[name="tema"][value="' + valg.tema + '"]');
@@ -2878,7 +2883,8 @@
   }
   window.aapneSak = aapneSak;
 
-  function lukkSak() { sakDialog.close(); }
+  function lukkSak() { if (!sender) sakDialog.close(); }
+  sakDialog.addEventListener("cancel", e => { if (sender) e.preventDefault(); });
   sakDialog.addEventListener("close", () => {
     document.body.classList.remove("sd-aapen");
     if (sakNaa === 4 || !sakMelding.value.trim()) { nullstillSak(); slettUtkast(); visSakSteg(1, 0); }
@@ -2947,39 +2953,43 @@
   sakSkjema.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (sakMelding.value.trim().length < 3) { if (sakNaa !== 2) visSakSteg(2, -1); gaaTil(3); return; }
+    if (sender) return;
     const send = document.getElementById("sd-send");
     const feil = document.getElementById("sd-feil-3");
     feil.hidden = true;
+    sender = true;
+    send.disabled = true;
     send.classList.add("sender");
     send.querySelector("span").textContent = "Sender …";
-    let ok = false;
-    if (kanSende) {
-      try {
-        const svar = await fetch("/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams(new FormData(sakSkjema)).toString()
-        });
-        ok = svar.ok;
-      } catch (err) { ok = false; }
-    } else {
-      await new Promise(r => setTimeout(r, 900));
-      ok = true;
-    }
-    if (!ok) {
-      send.classList.remove("sender");
-      send.querySelector("span").textContent = "Prøv igjen";
-      feil.textContent = "Det gikk ikke å sende akkurat nå. Prøv igjen – eller si fra til klassekontakten.";
+    // Lås også tilbakeknapper og felter mens vi venter; innholdet må ikke endres under sending.
+    const formData = new FormData(sakSkjema);
+    // Botsjekkens skjulte token endres mellom forsøk og er ikke del av meldingen.
+    formData.delete("cf-turnstile-response");
+    const fields = Object.fromEntries(formData);
+    const controls = [...sakSkjema.querySelectorAll("input, textarea, button")];
+    const previousDisabled = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    try {
+      if (!kanSende) throw new Error("Innsending er deaktivert i denne forhåndsvisningen. Ingenting er sendt.");
+      if (Date.now() < ventTil) throw new Error("Vent litt før du prøver igjen. Utkastet er beholdt.");
+      const id = await submissionId(fields);
+      const turnstileToken = await challenge(document.getElementById("sd-botsjekk"));
+      const result = await request("/api/saker", { method: "POST", data: { ...fields, id, turnstileToken } });
+      if (result.mottatt !== true) throw new Error("Fikk ingen bekreftelse på lagring. Prøv igjen.");
+    } catch (error) {
+      if (error.status === 429) ventTil = Date.now() + Math.max(error.retryAfter, 60) * 1000;
+      feil.textContent = error.message || "Det gikk ikke å sende akkurat nå. Prøv igjen – eller si fra til klassekontakten.";
       feil.hidden = false;
       return;
+    } finally {
+      sender = false;
+      controls.forEach((control, i) => { control.disabled = previousDisabled[i]; });
+      send.disabled = false;
+      send.classList.remove("sender");
+      send.querySelector("span").textContent = "Send til FAU";
     }
+    clearSubmission();
     slettUtkast();
-    document.getElementById("sd-forhand").hidden = kanSende;
-    const steg3 = sakSteg[2];
-    if (!reduserBevegelse) {
-      steg3.classList.add("lett");
-      await new Promise(r => setTimeout(r, 360));
-    }
     visSakSteg(4, 1);
     sakFremdrift.forEach(b => b.classList.add("fylt"));
     setTimeout(() => festSmell(sakDialog.querySelector(".sd-hake"), 34), 520);
