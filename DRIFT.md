@@ -58,14 +58,22 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
 
    Disse er offentlige variabler, ikke hemmeligheter. Cloudflare-token,
    Turnstile-hemmelighet og administratorliste skal ikke legges i GitHub.
-9. Velg GitHub Actions som kilde under Settings → Pages. Konfigurer domenet
-   hellemyrfau.no og verifiser domeneeierskapet i GitHub-organisasjonen før DNS
-   flyttes. Følg GitHubs gjeldende A/AAAA/CNAME-anvisninger hos DNS-leverandøren.
-   Behold eksisterende MX/TXT-poster for e-post. Aktiver Enforce HTTPS når
-   sertifikatet er klart. Bygget inkluderer CNAME og .nojekyll.
+9. Velg GitHub Actions som kilde under Settings → Pages. La Custom domain være
+   tom under forhåndsvisningen. Uten `PAGES_PRODUCTION=true` bygges siden for
+   `https://hellemyrfau.github.io/nettside/`, med riktige ressursstier, ingen CNAME,
+   og innsending og admin deaktivert. Forhåndsvisningen ber søkemotorer om ikke å
+   indeksere siden; den er fortsatt offentlig tilgjengelig. Netlify og DNS endres
+   ikke av Pages-publisering. Stans Netlifys automatiske publisering, eller suspender
+   Netlify-appen i GitHub-organisasjonen, før flere endringer merges.
 10. Start workflowen «Kontroller bygg» manuelt på main etter oppsettet, eller la
-    neste gjennomgåtte endring på main utløse publisering. Uten begge offentlige
-    variabler hoppes Pages-publisering over; PR-er har alltid innsending deaktivert.
+    neste gjennomgåtte endring på main utløse publisering. PR-er kjører kontroller,
+    men publiseres ikke. Forhåndsvisning trenger ikke API-nøklene. Produksjonsbygg
+    stopper med feil hvis de offentlige API-variablene mangler.
+
+Før full funksjonstest på preview-adressen må Google-klienten, Turnstile-widgeten,
+Workerens origin-/vertslister og nettsidens genererte API-konfigurasjon utvides for
+preview-adressen. Ikke bruk `PAGES_PRODUCTION` til dette: den bryteren bygger for
+det endelige domenet og rotstien.
 
 Ingen domeneflytting til Cloudflare er nødvendig i denne versjonen. Cloudflare
 leverer API-et, og GitHub Pages leverer nettsiden. API-et tillater bare nettleser-
@@ -75,6 +83,13 @@ administratorlisten på serveren.
 
 ## Lansering
 
+- Når forhåndsvisningen er godkjent: verifiser domeneeierskapet i GitHub-
+  organisasjonen og konfigurer hellemyrfau.no under Pages. Sett repository-
+  variabelen `PAGES_PRODUCTION` til `true` og kjør workflowen på main; bygget bruker
+  da rotstien, API-konfigurasjon og CNAME. Dette er et eget lanseringssteg, ikke en
+  del av preview-oppsettet. Flytt deretter DNS etter GitHubs gjeldende A/AAAA/CNAME-
+  anvisninger. Behold MX/TXT-poster for e-post og Netlify som retrettmulighet.
+  Aktiver Enforce HTTPS når sertifikatet er klart.
 - Gjennomgå databehandleravtaler og overføringsgrunnlag for Cloudflare, Google og
   GitHub. Oppdater personvernteksten hvis den faktiske konfigurasjonen avviker.
   D1-meldinger lagres i EU; Worker, botsjekk og Google-innlogging er ikke lovet
