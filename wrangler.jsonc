@@ -11,9 +11,9 @@
   "vars": {
     "ALLOWED_ORIGINS": "https://hellemyrfau.no,https://www.hellemyrfau.no,https://hellemyrfau.github.io",
     "GOOGLE_CLIENT_ID": "357870358336-hcfhdi298sgebtmfnjs4g0uasu897357.apps.googleusercontent.com",
-    "TURNSTILE_HOSTNAMES": "hellemyrfau.github.io",
-    "SUBMISSIONS_OPEN": "false",
-    "SUBMISSION_ORIGINS": "https://hellemyrfau.github.io"
+    "TURNSTILE_HOSTNAMES": "hellemyrfau.no,www.hellemyrfau.no,hellemyrfau.github.io",
+    "SUBMISSIONS_OPEN": "true",
+    "SUBMISSION_ORIGINS": "https://hellemyrfau.no,https://www.hellemyrfau.no,https://hellemyrfau.github.io"
   },
   "d1_databases": [{
     "binding": "DB",
