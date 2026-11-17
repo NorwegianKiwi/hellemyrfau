@@ -35,10 +35,17 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Bygg forhåndsvisning på github.io
-        if: vars.PAGES_PRODUCTION != 'true'
+        if: vars.PAGES_PRODUCTION != 'true' && vars.PAGES_PREVIEW_API != 'true'
         run: npm run build
         env:
           PUBLIC_BASE_PATH: /nettside/
+      - name: Bygg API-forhåndsvisning på github.io
+        if: vars.PAGES_PRODUCTION != 'true' && vars.PAGES_PREVIEW_API == 'true'
+        run: npm run build:preview-api
+        env:
+          PUBLIC_BASE_PATH: /nettside/
+          PUBLIC_API_BASE: ${{ vars.PUBLIC_API_BASE }}
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
       - name: Bygg for eget domene
         if: vars.PAGES_PRODUCTION == 'true'
         run: npm run build:production

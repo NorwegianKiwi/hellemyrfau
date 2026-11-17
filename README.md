@@ -51,9 +51,12 @@ Innsendte saker skal aldri legges i repo, PR-er, issues, logger eller skjermbild
 Se [DRIFT.md](DRIFT.md) for kontoer, EU-database, Google, Turnstile,
 GitHub Pages, lansering, sikkerhetskopi og overlevering.
 
-Nettsiden publiseres fra `main` etter tester når de offentlige GitHub-variablene
-er satt. Før det kjøres bare kontroller. Worker og migreringer publiseres manuelt
-fra gjennomgått kode. Ingen Cloudflare-token lagres i GitHub Actions.
+Nettsiden publiseres fra `main` etter tester. PR-er kjører bare kontroller.
+Standard er en statisk forhåndsvisning på `/nettside/`. `PAGES_PREVIEW_API=true`
+aktiverer API-bygget for github.io med de offentlige API-variablene; det åpner ikke
+Worker-mottaket. Se DRIFT.md for Google/Turnstile, testperiode og opprydding.
+`PAGES_PRODUCTION=true` er et separat, avtalt lanseringssteg for det endelige domenet.
+Worker og migreringer publiseres manuelt fra gjennomgått kode. Ingen Cloudflare-token lagres i GitHub Actions.
 
 E-post fra admin åpnes i administratorens e-postprogram. Det sendes ikke automatisk.
 Mottak av saker via e-post inngår ikke i denne versjonen.
