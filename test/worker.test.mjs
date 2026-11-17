@@ -123,28 +123,33 @@ test('preview tillater testinnsending og admin, men stenger endelige domener', a
   assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 1);
 });
 
-test('lanseringskonfigurasjonen holder mottak stengt og avviser preview også ved åpning', async () => {
+test('åpent mottak tillater sluttdomener og github.io, men krever fortsatt botsjekk og admininnlogging', async () => {
   const { env, call, message } = setup();
   const { vars } = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
   Object.assign(env, vars);
-  assert.equal(env.SUBMISSIONS_OPEN, 'false');
-  for (const site of [origin, 'https://www.hellemyrfau.no']) {
-    assert.equal((await call('/api/saker', 'POST', message, '', { origin: site })).status, 503);
-    assert.equal((await call('/api/admin', 'GET', undefined, 'admin', { origin: site })).status, 200);
-    assert.equal((await call('/api/admin', 'GET', undefined, '', { origin: site })).status, 401);
+  assert.equal(env.SUBMISSIONS_OPEN, 'true');
+  const sites = [origin, 'https://www.hellemyrfau.no', 'https://hellemyrfau.github.io'];
+  for (const site of sites) {
+    const headers = { origin: site };
+    const preflight = await call('/api/saker', 'OPTIONS', undefined, '', { ...headers, 'access-control-request-method': 'POST' });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), site);
+    assert.equal((await call('/api/saker', 'POST', { ...message, id: crypto.randomUUID(), turnstileToken: 'invalid' }, '', headers)).status, 400);
+    assert.equal((await call('/api/saker', 'POST', { ...message, id: crypto.randomUUID() }, '', headers)).status, 201);
+    assert.equal((await call('/api/admin', 'GET', undefined, 'admin', headers)).status, 200);
+    assert.equal((await call('/api/admin', 'GET', undefined, '', headers)).status, 401);
   }
-  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 0);
-  env.SUBMISSIONS_OPEN = 'true';
-  for (const site of [origin, 'https://www.hellemyrfau.no']) {
-    assert.equal((await call('/api/saker', 'POST', { ...message, id: crypto.randomUUID() }, '', { origin: site })).status, 201);
-  }
-  for (const site of ['https://hellemyrfau.github.io', 'https://evil.test']) {
+  for (const site of ['https://evil.test', 'https://hellemyrfau.github.io.evil.test', 'http://hellemyrfau.no']) {
     const response = await call('/api/saker', 'POST', message, '', { origin: site });
     assert.equal(response.status, 403);
     assert.equal(response.headers.get('access-control-allow-origin'), null);
     assert.equal((await call('/api/admin', 'GET', undefined, 'admin', { origin: site })).status, 403);
   }
-  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 2);
+  env.SUBMISSIONS_OPEN = 'false';
+  for (const site of sites) {
+    assert.equal((await call('/api/saker', 'POST', message, '', { origin: site })).status, 503);
+  }
+  assert.equal(env.DB.sqlite.prepare('SELECT COUNT(*) AS n FROM saker').get().n, 3);
 });
 
 test('trafikkgrense gir Retry-After og skriver ikke til databasen', async () => {
@@ -282,16 +287,16 @@ test('Turnstile krever gyldig resultat, riktig vert og riktig handling', async t
 });
 
 
-test('lanseringskonfigurasjonen godtar Turnstile bare fra endelige verter', async t => {
+test('åpent mottak godtar Turnstile fra sluttdomener og github.io', async t => {
   const { vars: env } = JSON.parse(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
   env.TURNSTILE_SECRET_KEY = 'secret';
   let result = { success: true, hostname: 'hellemyrfau.no', action: 'send-sak' };
   t.mock.method(globalThis, 'fetch', async () => Response.json(result));
-  for (const hostname of ['hellemyrfau.no', 'www.hellemyrfau.no']) {
+  for (const hostname of ['hellemyrfau.no', 'www.hellemyrfau.no', 'hellemyrfau.github.io']) {
     result.hostname = hostname;
     assert.equal(await verifyTurnstile('token', env), true);
   }
-  for (const hostname of ['hellemyrfau.github.io', 'evil.test']) {
+  for (const hostname of ['evil.test', 'hellemyrfau.github.io.evil.test']) {
     result.hostname = hostname;
     assert.equal(await verifyTurnstile('token', env), false);
   }

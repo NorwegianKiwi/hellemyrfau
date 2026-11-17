@@ -42,7 +42,8 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
    `ADMIN_EPOSTER` er en kommaseparert liste med eksakte, bekreftede Google-
    e-postadresser i små bokstaver. Ikke bruk Gmail-aliasnormalisering som utvider
    listen. Kontrollpaneltilgang og tilgang til `/admin` er to separate tillatelser.
-7. Kjør migrering og publiser med mottaket fortsatt stengt:
+7. Ved førstegangsoppsett: sett `SUBMISSIONS_OPEN=false` før migrering og
+   publisering. Den nåværende konfigurasjonen har mottak åpent etter avtale:
 
    ```sh
    npx wrangler d1 migrations apply DB --remote --env ""
@@ -70,76 +71,43 @@ hemmelige nøkler skal sendes i chat eller legges i GitHub.
     men publiseres ikke. Statisk forhåndsvisning trenger ikke API-nøklene. API-forhåndsvisning og
     produksjonsbygg stopper med feil hvis de offentlige API-variablene mangler.
 
-## Funksjonstest på GitHub-forhåndsvisningen
+## GitHub-forhåndsvisning og åpent mottak
 
 Forhåndsvisningen er funksjonstestet: Google-innlogging, innsending, notat,
 arkivering/gjenåpning, svar og sletting fungerte, og mobilvisning er kontrollert.
-Testsaken er slettet og mottaket stengt. Repoets Worker-konfigurasjon er nå
-forberedt for **de endelige domenene**, fortsatt med `SUBMISSIONS_OPEN=false`.
-Prosedyren under beskriver preview-oppsettet. Ved ny preview-testing må
-`ALLOWED_ORIGINS` inkludere `https://hellemyrfau.github.io`,
-`SUBMISSION_ORIGINS` settes til bare `https://hellemyrfau.github.io`, og
-`TURNSTILE_HOSTNAMES` til bare `hellemyrfau.github.io` i en gjennomgått endring.
-Ikke åpne mottak før preview-avgrensningen er kontrollert.
+Testsaken er slettet. Eieren har deretter godkjent åpent mottak både på
+`https://hellemyrfau.github.io` og de to sluttdomenene `https://hellemyrfau.no`
+og `https://www.hellemyrfau.no`. Alle tre finnes i `ALLOWED_ORIGINS` og
+`SUBMISSION_ORIGINS`; tilsvarende vertsnavn finnes i `TURNSTILE_HOSTNAMES`.
+`SUBMISSIONS_OPEN=true` i repoet trer i kraft ved manuell Worker-publisering
+fra gjennomgått kode. Merge alene publiserer ikke Worker-en.
 
-Netlify betjener fortsatt det offentlige domenet. Behold Netlify-appen suspendert.
-Ikke endre DNS, Pages Custom domain eller `PAGES_PRODUCTION` i denne prosedyren.
-Gjennomgå og merge PR-en først; Worker publiseres manuelt fra gjennomgått kode.
-Ingen Worker-publisering eller åpning av mottak skjer ved merge alene.
+Begge nettsideadressene er offentlige innganger til samme innboks; innsendere
+trenger ingen innlogging. Alle innsendelser krever gyldig Turnstile, og
+trafikkbegrensning, idempotens og adminverifisering gjelder fortsatt.
+CORS/Origin er ikke autentisering av innsendere. Ikke behandle github.io som en
+privat testsone. Bruk bare oppdiktede opplysninger ved testing og slett testsaker.
 
-1. I Google Cloud Console, velg prosjektet **Hellemyr FAU** (`hellemyr-fau`).
-   Åpne Google Auth Platform → Clients og den eksisterende webklienten med ID
-   `357870358336-hcfhdi298sgebtmfnjs4g0uasu897357.apps.googleusercontent.com`.
-   Legg til `https://hellemyrfau.github.io` under **Authorized JavaScript origins**
-   og lagre. Behold de eksisterende originene. Ingen `/nettside/` eller `/admin/`
-   i origin, ingen redirect URI: innloggingen bruker JavaScript-callback.
-   Ingen Google client secret trengs eller skal hentes ut. Under Audience →
-   Test users kan de to avtalte administratorene legges til ved behov mens appen
-   har status External/Testing. Workerens eksakte e-postliste gjelder fortsatt.
-2. I Cloudflare-kontoen **Hellemyr FAU**, åpne Turnstile og den eksisterende widgeten
-   med site key `0x4AAAAAAGCd9rU6xcCb_d32`. Under **Hostname Management → Add Hostnames**
-   legg til `hellemyrfau.github.io` og lagre. Bruk bare vertsnavnet, uten protokoll
-   eller sti. Behold eksisterende verter, Managed-modus og pre-clearance avslått.
-   Ikke roter eller vis den hemmelige nøkkelen.
-3. Kontroller `wrangler.jsonc`: `ALLOWED_ORIGINS` inkluderer preview-origin;
-   `TURNSTILE_HOSTNAMES` og `SUBMISSION_ORIGINS` tillater **bare preview-verten/origin**.
-   `SUBMISSIONS_OPEN` står fortsatt til `false`. Publiser først med stengt mottak:
+For github.io må følgende være lagret:
 
-   ```sh
-   npm run check:worker
-   npm run deploy:worker
-   ```
+1. I Google-prosjektet `hellemyr-fau`, på den eksisterende webklienten:
+   `https://hellemyrfau.github.io` under Authorized JavaScript origins, i tillegg
+   til begge sluttdomenene. Ingen sti eller redirect URI; innloggingen bruker
+   JavaScript-callback. Ingen client secret trengs. Kontroller Audience/Test users
+   ved behov mens appen står som External/Testing.
+2. I eksisterende Turnstile-widget med site key `0x4AAAAAAGCd9rU6xcCb_d32`:
+   `hellemyrfau.github.io` samt begge sluttvertene under Hostname Management.
+   Behold Managed og pre-clearance avslått; ikke hent eller roter secret.
+3. For github.io-bygget: `PAGES_PREVIEW_API=true`, `PAGES_PRODUCTION` tom/false,
+   og de eksisterende offentlige API-variablene i GitHub Actions. Kjør
+   «Kontroller bygg» på main. Bygget beholder `/nettside/`, noindex og ingen CNAME.
 
-   Dette bruker eksisterende Worker, D1-binding og lagrede secrets. Ingen ny
-   database, migrering eller secret er nødvendig. Origin-listen for API-tilgang
-   åpner ikke innsending alene; POST krever også at origin finnes i
-   `SUBMISSION_ORIGINS`, at `SUBMISSIONS_OPEN=true`, og gyldig Turnstile.
-4. I GitHub Settings → Secrets and variables → Actions → Variables, sett
-   `PAGES_PREVIEW_API=true`. Behold `PAGES_PRODUCTION` tom/false. De eksisterende
-   `PUBLIC_API_BASE` og `PUBLIC_TURNSTILE_SITE_KEY` brukes. Start «Kontroller bygg»
-   manuelt på main. API-bygget beholder `/nettside/`, noindex og ingen CNAME, og
-   tillater bare `https://hellemyrfau.github.io` i nettlesermodulen.
-   Åpne `https://hellemyrfau.github.io/nettside/admin/` og test Google-innlogging.
-5. Når testerne er klare, åpne preview-mottaket eksplisitt fra gjennomgått kode:
-
-   ```sh
-   npx wrangler deploy --env "" --var SUBMISSIONS_OPEN:true
-   ```
-
-   Dette overstyrer bare av/på-bryteren i denne publiseringen. De endelige domenene
-   avvises fortsatt av `SUBMISSION_ORIGINS`; Turnstile godtas bare fra preview-verten.
-   Preview er offentlig tilgjengelig: alle med adressen kan sende testmeldinger
-   når mottaket er åpent. CORS/Origin er ikke en privat testerinnlogging eller
-   beskyttelse mot forfalskede HTTP-klienter. Bruk en kort testperiode og bare
-   oppdiktede opplysninger, f.eks. melding med prefikset «TEST – SLETT».
-6. Test anonym melding og oppdiktet kontaktinformasjon, admininnlogging,
-   status/ansvarlig, svar, notat og sletting. Test også avvist innlogging og feil i
-   botsjekk. Bekreft på mobil og stor skjerm. Svar lagres; e-post sendes ikke automatisk.
-   Slett testsakene enkeltvis i admin etterpå, ikke slett hele databasen.
-7. Steng testmottaket med `npm run deploy:worker` (repoets `SUBMISSIONS_OPEN=false`).
-   Vanlig Worker-publisering stenger dermed et tidligere åpnet testmottak igjen.
-   Sett eventuelt `PAGES_PREVIEW_API=false` og kjør Pages-workflowen for å deaktivere
-   API-et i nettsiden også. Bare å deaktivere frontend stenger ikke Worker-mottaket.
+Worker-publisering åpner API-mottaket for alle tre originene. Den flytter ikke
+DNS eller Netlify-nettstedet. Når produksjonsbygg og Custom domain senere aktiveres,
+brukes rotstier og github.io-adressen videresendes til sluttdomenet.
+For å stenge mottaket må av/på-bryteren endres eksplisitt; en vanlig deploy
+stenger det **ikke** når repoets konfigurasjon har `SUBMISSIONS_OPEN=true`.
+Se avsnittet om feil nedenfor.
 
 ### Hvor testmeldinger lagres
 
@@ -166,11 +134,10 @@ administratorlisten på serveren.
 Dette kan gjøres før den som har DNS-tilgang er tilgjengelig:
 
 1. Gjennomgå og merge konfigurasjonsendringen. Det publiserer ikke Worker-en
-   eller åpner mottaket. Behold Netlify-appen suspendert.
-2. Publiser Worker fra gjennomgått main med `npm run deploy:worker`.
-   `SUBMISSIONS_OPEN` skal fortsatt være `false`. Worker tillater nå bare
-   `https://hellemyrfau.no` og `https://www.hellemyrfau.no`, så API/login på
-   github.io-preview slutter å fungere etter denne publiseringen.
+   eller endrer mottakets deployede tilstand. Behold Netlify-appen suspendert.
+2. Varsle før publisering: `npm run deploy:worker` fra gjennomgått main åpner
+   mottaket for både sluttdomenene og github.io, etter eierens avtale. Alle bruker
+   samme database. Preview-login fortsetter å fungere så lenge preview-bygget brukes.
 3. Kontroller at begge sluttdomenene fortsatt er lagret i Googles Authorized
    JavaScript origins og Turnstile-widgetens hostname-liste. Ikke hent secrets.
 4. Varsle om at preview-adressen endres før neste steg: produksjonsbygget bruker
@@ -186,13 +153,13 @@ Dette kan gjøres før den som har DNS-tilgang er tilgjengelig:
    Verifiser gjerne domenet på GitHub-organisasjonen først; TXT-verifisering
    krever at DNS-ansvarlig legger til verdien GitHub oppgir.
 7. Meld «klart for DNS-bytte» først når produksjonsbygget er publisert, Pages
-   Custom domain er lagret, Worker er publisert med sluttoriginene og stengt
-   mottak, og eksterne Google/Turnstile-innstillinger er kontrollert.
+   Custom domain er lagret, Worker er publisert med avtalt åpent mottak for alle
+   tre originer, og eksterne Google/Turnstile-innstillinger er kontrollert.
 
 Det er ikke nødvendig å endre repoets navn for å bruke rotstien på eget domene.
 Behold eksisterende Google-klient, Turnstile-widget, Worker og D1-database.
 
-## DNS-bytte og åpning
+## DNS-bytte og kontroll
 
 DNS-ansvarlig tar først en privat kopi av eksisterende DNS-poster og TTL-er.
 Registraren og den aktive DNS-leverandøren kan være ulike; kontroller autoritative
@@ -207,10 +174,9 @@ navnetjenere før endring. Ikke bytt navnetjenere som en del av denne flyttingen
   Ikke regn midlertidig manglende sertifikat som ferdig lansering.
 - Gjennomgå databehandleravtaler og overføringsgrunnlag for Cloudflare, Google og
   GitHub. Oppdater personvernteksten hvis faktisk konfigurasjon avviker.
-- Mottaket er fortsatt stengt etter DNS-bytte. Når HTTPS og innlogging er godkjent
-  og åpning er eksplisitt avtalt, sett `SUBMISSIONS_OPEN` til `"true"` gjennom en
-  PR og publiser gjennomgått Worker. Behold sluttoriginene i `SUBMISSION_ORIGINS`
-  og sluttvertene i `TURNSTILE_HOSTNAMES`. Ikke åpne igjen for github.io.
+- Mottaket er allerede åpnet etter avtale under forberedelsen; ingen ny
+  Worker-publisering trengs bare fordi DNS byttes. Kontroller HTTPS, innlogging
+  og skjema på sluttdomenet før lanseringen regnes som ferdig.
 - Test med oppdiktet sak, slett den etterpå, og bekreft at svar bare åpner
   e-postprogrammet; ingen e-post sendes automatisk.
 - Avvikling av Netlify er et separat steg etter godkjent drift. Ikke fjern gammel
@@ -285,7 +251,15 @@ commit med `npm run deploy:worker`; nye migreringer kjøres før kode som trenge
 GitHub Actions bygger og publiserer bare nettsiden. Ikke kjør deploy-kommandoer fra
 uavklart bidragskode med innlogget Wrangler.
 
-Ved API-feil: sett SUBMISSIONS_OPEN=false og publiser for å stenge nye innsendinger.
+Ved API-feil: steng nye innsendinger med:
+
+```sh
+npx wrangler deploy --env "" --var SUBMISSIONS_OPEN:false
+```
+
+Dette overstyrer bryteren i denne publiseringen. Sett også `SUBMISSIONS_OPEN=false`
+i repoet gjennom en PR ved vedvarende stenging; ellers åpner neste vanlige deploy
+mottaket igjen. Bare å sette `PAGES_PREVIEW_API=false` stenger ikke Worker-mottaket.
 Behold utkastene i nettleserne. Gjenopprett en kjent fungerende Worker-versjon via
 Cloudflare Dashboard ved kodefeil; ikke rull tilbake database eller slett saker
 som del av vanlig kode-rollback. Nettsiden kan publiseres på nytt fra en tidligere
